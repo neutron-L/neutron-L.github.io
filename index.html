@@ -89,7 +89,7 @@
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">rda@pa ~/Downloads&gt; g++ a.cc main.cc -g -o main</span><br><span class="line">rda@pa ~/Downloads&gt; ./main</span><br><span class="line">main.c: 512</span><br><span class="line">a.cc: 1024</span><br></pre></td></tr></table></figure>
 <p>可见，定义在不同文件中的同名const对象是不同的。<br>若需要在文件之间共享const变量，则对于其声明和定义都添加extern关键字，这样只需定义一次就可以了。<br>为main.cc中的bufSize添加extern关键字。</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// main.cc</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">extern</span> <span class="type">const</span> <span class="type">int</span> bufSize = <span class="number">512</span>;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">()</span></span>; <span class="comment">// define in a.cc</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    cout&lt;&lt; <span class="string">&quot;main.c: &quot;</span> &lt;&lt; bufSize&lt;&lt;endl;</span><br><span class="line">    <span class="built_in">func</span>(); <span class="comment">// call func</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>为main.cc中的bufSize添加extern关键字，并舍去其初始值。</p>
+<p>为a.cc中的bufSize添加extern关键字，并舍去其初始值。</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// a.cc</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">extern</span> <span class="type">const</span> <span class="type">int</span> bufSize;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;a.cc: &quot;</span> &lt;&lt; bufSize &lt;&lt; endl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>再次编译并执行：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">rda@pa ~/Downloads&gt; g++ a.cc main.cc -g -o main &amp;&amp; ./main</span><br><span class="line">main.c: 512</span><br><span class="line">a.cc: 512</span><br></pre></td></tr></table></figure>
@@ -126,7 +126,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://neutron-l.github.io/2022/11/12/avl_tree/" data-id="clad89zcw0003mcu35ly16cos" data-title="Avl Tree" class="article-share-link">Share</a>
+      <a data-url="https://neutron-l.github.io/2022/11/12/avl_tree/" data-id="clad8bil70001xwu338u977ln" data-title="Avl Tree" class="article-share-link">Share</a>
       
       
       
@@ -203,7 +203,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://neutron-l.github.io/2022/11/10/const/" data-id="clad89zct0001mcu34zflbdvw" data-title="const限定符" class="article-share-link">Share</a>
+      <a data-url="https://neutron-l.github.io/2022/11/10/const/" data-id="clad8bilk0005xwu37rrl8uko" data-title="const限定符" class="article-share-link">Share</a>
       
       
       
