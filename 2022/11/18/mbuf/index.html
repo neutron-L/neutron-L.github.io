@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Mbuf | Keep Love</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Keep Love</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/categories">Categories</a>
+        
+          <a class="main-nav-link" href="/tags">Tags</a>
+        
+          <a class="main-nav-link" href="/about">About</a>
+        
+      </nav>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-mbuf" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2022/11/18/mbuf/" class="article-date">
+  <time class="dt-published" datetime="2022-11-18T03:25:32.054Z" itemprop="datePublished">2022-11-18</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/dpdk/">dpdk</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      Mbuf
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>Mbuf库提供分配和释放缓冲的接口，可以为dpdk应用程序提供存储信息的功能，所需存储的数据实际都存放在了一个mempool中。</p>
+<h1 id="Design"><a href="#Design" class="headerlink" title="Design"></a>Design</h1><p>Dpdk在单个内存缓冲区中嵌入了元数据，该缓冲区的结构后面是数据包数据的固定大小区域。元数据存储了一些控制信息，包括消息的类型、长度、数据段的偏移，如果该消息以多个节点的链表示，则还需要包括一个指向下一节点的指针。<br><img src="http://doc.dpdk.org/guides-20.02/_images/mbuf2.svg" title="buffer"><br>对于新分配的mbuf，消息缓冲区中数据开始的区域是缓冲区开始后的RTE_PKTMBUF_HEADROOM字节，以保持缓存对齐。<br><img src="http://doc.dpdk.org/guides-20.02/_images/mbuf1.svg"></p>
+<h2 id="struct"><a href="#struct" class="headerlink" title="struct"></a>struct</h2><p>必要重要的数据有：段缓冲的虚拟地址（buf_addr）和物理地址（buf_physaddr）、负责分配对象的相关的内存池（pool）、下一个mbuf的指针（next）、引用技术（refcnt）。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * The generic rte_mbuf, containing a packet mbuf.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">rte_mbuf</span> &#123;</span></span><br><span class="line">	MARKER cacheline0;</span><br><span class="line"></span><br><span class="line">	<span class="type">void</span> *buf_addr;           <span class="comment">/**&lt; Virtual address of segment buffer. */</span></span><br><span class="line">	<span class="type">phys_addr_t</span> buf_physaddr; <span class="comment">/**&lt; Physical address of segment buffer. */</span></span><br><span class="line"></span><br><span class="line">	<span class="type">uint16_t</span> buf_len;         <span class="comment">/**&lt; Length of segment buffer. */</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">/* next 6 bytes are initialised on RX descriptor rearm */</span></span><br><span class="line">	MARKER8 rearm_data;</span><br><span class="line">	<span class="type">uint16_t</span> data_off;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * 16-bit Reference counter.</span></span><br><span class="line"><span class="comment">	 * It should only be accessed using the following functions:</span></span><br><span class="line"><span class="comment">	 * rte_mbuf_refcnt_update(), rte_mbuf_refcnt_read(), and</span></span><br><span class="line"><span class="comment">	 * rte_mbuf_refcnt_set(). The functionality of these functions (atomic,</span></span><br><span class="line"><span class="comment">	 * or non-atomic) is controlled by the CONFIG_RTE_MBUF_REFCNT_ATOMIC</span></span><br><span class="line"><span class="comment">	 * config option.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	RTE_STD_C11</span><br><span class="line">	<span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">		<span class="type">rte_atomic16_t</span> refcnt_atomic; <span class="comment">/**&lt; Atomically accessed refcnt */</span></span><br><span class="line">		<span class="type">uint16_t</span> refcnt;              <span class="comment">/**&lt; Non-atomically accessed refcnt */</span></span><br><span class="line">	&#125;;</span><br><span class="line">	<span class="type">uint8_t</span> nb_segs;          <span class="comment">/**&lt; Number of segments. */</span></span><br><span class="line">	<span class="type">uint8_t</span> port;             <span class="comment">/**&lt; Input port. */</span></span><br><span class="line"></span><br><span class="line">	<span class="type">uint64_t</span> ol_flags;        <span class="comment">/**&lt; Offload features. */</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">/* remaining bytes are set on RX when pulling packet from descriptor */</span></span><br><span class="line">	MARKER rx_descriptor_fields1;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * The packet type, which is the combination of outer/inner L2, L3, L4</span></span><br><span class="line"><span class="comment">	 * and tunnel types. The packet_type is about data really present in the</span></span><br><span class="line"><span class="comment">	 * mbuf. Example: if vlan stripping is enabled, a received vlan packet</span></span><br><span class="line"><span class="comment">	 * would have RTE_PTYPE_L2_ETHER and not RTE_PTYPE_L2_VLAN because the</span></span><br><span class="line"><span class="comment">	 * vlan is stripped from the data.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	RTE_STD_C11</span><br><span class="line">	<span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">		<span class="type">uint32_t</span> packet_type; <span class="comment">/**&lt; L2/L3/L4 and tunnel information. */</span></span><br><span class="line">		<span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">			<span class="type">uint32_t</span> l2_type:<span class="number">4</span>; <span class="comment">/**&lt; (Outer) L2 type. */</span></span><br><span class="line">			<span class="type">uint32_t</span> l3_type:<span class="number">4</span>; <span class="comment">/**&lt; (Outer) L3 type. */</span></span><br><span class="line">			<span class="type">uint32_t</span> l4_type:<span class="number">4</span>; <span class="comment">/**&lt; (Outer) L4 type. */</span></span><br><span class="line">			<span class="type">uint32_t</span> tun_type:<span class="number">4</span>; <span class="comment">/**&lt; Tunnel type. */</span></span><br><span class="line">			<span class="type">uint32_t</span> inner_l2_type:<span class="number">4</span>; <span class="comment">/**&lt; Inner L2 type. */</span></span><br><span class="line">			<span class="type">uint32_t</span> inner_l3_type:<span class="number">4</span>; <span class="comment">/**&lt; Inner L3 type. */</span></span><br><span class="line">			<span class="type">uint32_t</span> inner_l4_type:<span class="number">4</span>; <span class="comment">/**&lt; Inner L4 type. */</span></span><br><span class="line">		&#125;;</span><br><span class="line">	&#125;;</span><br><span class="line"></span><br><span class="line">	<span class="type">uint32_t</span> pkt_len;         <span class="comment">/**&lt; Total pkt len: sum of all segments. */</span></span><br><span class="line">	<span class="type">uint16_t</span> data_len;        <span class="comment">/**&lt; Amount of data in segment buffer. */</span></span><br><span class="line">	<span class="comment">/** VLAN TCI (CPU order), valid if PKT_RX_VLAN_STRIPPED is set. */</span></span><br><span class="line">	<span class="type">uint16_t</span> vlan_tci;</span><br><span class="line"></span><br><span class="line">	<span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">		<span class="type">uint32_t</span> rss;     <span class="comment">/**&lt; RSS hash result if RSS enabled */</span></span><br><span class="line">		<span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">			RTE_STD_C11</span><br><span class="line">			<span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">				<span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">					<span class="type">uint16_t</span> hash;</span><br><span class="line">					<span class="type">uint16_t</span> id;</span><br><span class="line">				&#125;;</span><br><span class="line">				<span class="type">uint32_t</span> lo;</span><br><span class="line">				<span class="comment">/**&lt; Second 4 flexible bytes */</span></span><br><span class="line">			&#125;;</span><br><span class="line">			<span class="type">uint32_t</span> hi;</span><br><span class="line">			<span class="comment">/**&lt; First 4 flexible bytes or FD ID, dependent on</span></span><br><span class="line"><span class="comment">			     PKT_RX_FDIR_* flag in ol_flags. */</span></span><br><span class="line">		&#125; fdir;           <span class="comment">/**&lt; Filter identifier if FDIR enabled */</span></span><br><span class="line">		<span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">			<span class="type">uint32_t</span> lo;</span><br><span class="line">			<span class="type">uint32_t</span> hi;</span><br><span class="line">		&#125; sched;          <span class="comment">/**&lt; Hierarchical scheduler */</span></span><br><span class="line">		<span class="type">uint32_t</span> usr;	  <span class="comment">/**&lt; User defined tags. See rte_distributor_process() */</span></span><br><span class="line">	&#125; hash;                   <span class="comment">/**&lt; hash information */</span></span><br><span class="line"></span><br><span class="line">	<span class="type">uint32_t</span> seqn; <span class="comment">/**&lt; Sequence number. See also rte_reorder_insert() */</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">/** Outer VLAN TCI (CPU order), valid if PKT_RX_QINQ_STRIPPED is set. */</span></span><br><span class="line">	<span class="type">uint16_t</span> vlan_tci_outer;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* second cache line - fields only used in slow path or on TX */</span></span><br><span class="line">	MARKER cacheline1 __rte_cache_min_aligned;</span><br><span class="line"></span><br><span class="line">	RTE_STD_C11</span><br><span class="line">	<span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">		<span class="type">void</span> *userdata;   <span class="comment">/**&lt; Can be used for external metadata */</span></span><br><span class="line">		<span class="type">uint64_t</span> udata64; <span class="comment">/**&lt; Allow 8-byte userdata on 32-bit */</span></span><br><span class="line">	&#125;;</span><br><span class="line"></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">rte_mempool</span> *<span class="title">pool</span>;</span> <span class="comment">/**&lt; Pool from which mbuf was allocated. */</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">rte_mbuf</span> *<span class="title">next</span>;</span>    <span class="comment">/**&lt; Next segment of scattered packet. */</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">/* fields to support TX offloads */</span></span><br><span class="line">	RTE_STD_C11</span><br><span class="line">	<span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">		<span class="type">uint64_t</span> tx_offload;       <span class="comment">/**&lt; combined for easy fetch */</span></span><br><span class="line">		__extension__</span><br><span class="line">		<span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">			<span class="type">uint64_t</span> l2_len:<span class="number">7</span>;</span><br><span class="line">			<span class="comment">/**&lt; L2 (MAC) Header Length for non-tunneling pkt.</span></span><br><span class="line"><span class="comment">			 * Outer_L4_len + ... + Inner_L2_len for tunneling pkt.</span></span><br><span class="line"><span class="comment">			 */</span></span><br><span class="line">			<span class="type">uint64_t</span> l3_len:<span class="number">9</span>; <span class="comment">/**&lt; L3 (IP) Header Length. */</span></span><br><span class="line">			<span class="type">uint64_t</span> l4_len:<span class="number">8</span>; <span class="comment">/**&lt; L4 (TCP/UDP) Header Length. */</span></span><br><span class="line">			<span class="type">uint64_t</span> tso_segsz:<span class="number">16</span>; <span class="comment">/**&lt; TCP TSO segment size */</span></span><br><span class="line"></span><br><span class="line">			<span class="comment">/* fields for TX offloading of tunnels */</span></span><br><span class="line">			<span class="type">uint64_t</span> outer_l3_len:<span class="number">9</span>; <span class="comment">/**&lt; Outer L3 (IP) Hdr Length. */</span></span><br><span class="line">			<span class="type">uint64_t</span> outer_l2_len:<span class="number">7</span>; <span class="comment">/**&lt; Outer L2 (MAC) Hdr Length. */</span></span><br><span class="line"></span><br><span class="line">			<span class="comment">/* uint64_t unused:8; */</span></span><br><span class="line">		&#125;;</span><br><span class="line">	&#125;;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/** Size of the application private data. In case of an indirect</span></span><br><span class="line"><span class="comment">	 * mbuf, it stores the direct mbuf private data size. */</span></span><br><span class="line">	<span class="type">uint16_t</span> priv_size;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/** Timesync flags for use with IEEE1588. */</span></span><br><span class="line">	<span class="type">uint16_t</span> timesync;</span><br><span class="line">&#125; __rte_cache_aligned;</span><br></pre></td></tr></table></figure>
+<h1 id="Operation"><a href="#Operation" class="headerlink" title="Operation"></a>Operation</h1><h2 id="Constructors"><a href="#Constructors" class="headerlink" title="Constructors"></a>Constructors</h2><p>mbuf存放在mempool中，在创建mempool时，如果指定了对象初始化回调函数，如上面例子中的rte_pktmbuf_init()，将会对其中每个mbuf调用此函数进行初始化，为某些成员赋值。</p>
+<h2 id="Allocate"><a href="#Allocate" class="headerlink" title="Allocate"></a>Allocate</h2><p>调用rte_mempool_get()从mempool中获取一个mbuf，并将其引用计数置1。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Allocate an unitialized mbuf from mempool *mp*.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * This function can be used by PMDs (especially in RX functions) to</span></span><br><span class="line"><span class="comment"> * allocate an unitialized mbuf. The driver is responsible of</span></span><br><span class="line"><span class="comment"> * initializing all the required fields. See rte_pktmbuf_reset().</span></span><br><span class="line"><span class="comment"> * For standard needs, prefer rte_pktmbuf_alloc().</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @param mp</span></span><br><span class="line"><span class="comment"> *   The mempool from which mbuf is allocated.</span></span><br><span class="line"><span class="comment"> * @return</span></span><br><span class="line"><span class="comment"> *   - The pointer to the new mbuf on success.</span></span><br><span class="line"><span class="comment"> *   - NULL if allocation failed.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="type">static</span> <span class="keyword">inline</span> <span class="keyword">struct</span> rte_mbuf *<span class="title function_">rte_mbuf_raw_alloc</span><span class="params">(<span class="keyword">struct</span> rte_mempool *mp)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">rte_mbuf</span> *<span class="title">m</span>;</span></span><br><span class="line">	<span class="type">void</span> *mb = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (rte_mempool_get(mp, &amp;mb) &lt; <span class="number">0</span>)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">	m = (<span class="keyword">struct</span> rte_mbuf *)mb;</span><br><span class="line">	RTE_ASSERT(rte_mbuf_refcnt_read(m) == <span class="number">0</span>);</span><br><span class="line">	rte_mbuf_refcnt_set(m, <span class="number">1</span>);</span><br><span class="line">	__rte_mbuf_sanity_check(m, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> m;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Free"><a href="#Free" class="headerlink" title="Free"></a>Free</h2><p>对于direct mbuf，直接调用rte_mempool_put()进行放回mempool；</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * @internal Put mbuf back into its original mempool.</span></span><br><span class="line"><span class="comment"> * The use of that function is reserved for RTE internal needs.</span></span><br><span class="line"><span class="comment"> * Please use rte_pktmbuf_free().</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @param m</span></span><br><span class="line"><span class="comment"> *   The mbuf to be freed.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="type">static</span> <span class="keyword">inline</span> <span class="type">void</span> __attribute__((always_inline))</span><br><span class="line">__rte_mbuf_raw_free(<span class="keyword">struct</span> rte_mbuf *m)</span><br><span class="line">&#123;</span><br><span class="line">	RTE_ASSERT(rte_mbuf_refcnt_read(m) == <span class="number">0</span>);</span><br><span class="line">	rte_mempool_put(m-&gt;pool, m);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对于indirect mbuf，需要先detach，然后再free它所attach的实际mbuf。</p>
+<p>回收mbuf时，会回收mbuf链上的所有mbuf节点。</p>
+<h2 id="Other"><a href="#Other" class="headerlink" title="Other"></a>Other</h2><ul>
+<li>获取数据部分的长度</li>
+<li>获取指向数据</li>
+<li>Prepend data before data</li>
+<li>Append data after data</li>
+<li>从缓冲区开始处移除数据 (rte_pktmbuf_adj())</li>
+<li>从缓冲区尾部移除数据 (rte_pktmbuf_trim())</li>
+</ul>
+<h1 id="Direct-and-Indirect-Buffers"><a href="#Direct-and-Indirect-Buffers" class="headerlink" title="Direct and Indirect Buffers"></a>Direct and Indirect Buffers</h1><p>上面描述的mbuf，由mbuf结构体首部、headroom和data等部分组成，实际持有数据，这样的mbuf称为direct mbuf。但在某些时候，比如需要复制或分片报文时，可能会用到另一种mbuf，它并不真正的持有数据，而是引用direct mbuf的数据，类似于对象的浅拷贝，这种mbuf称为indirect mbuf。</p>
+<p>可以通过attach操作生成一个indirect mbuf。每个mbuf都有一个引用计数，当direct mbuf被attach时，它的引用计数+1；当被deattch时，引用计数-1。当引用计数为0时，意味着direct mbuf没人使用，可以被释放了。</p>
+<p>indirect mbuf机制有一些限制条件：</p>
+<p>不能attach一个indirect mbuf<br>attach之前，mbuf的引用计数必须是1，也就是说，它没有被其他mbuf引用过<br>不能把indirect mbuf再次attach到一个direct mbuf，除非先deattch<br>虽然可以直接调用attach&#x2F;detach操作，但推荐使用clone操作来浅拷贝mbuf，因为clone会正确处理链式mbuf。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://neutron-l.github.io/2022/11/18/mbuf/" data-id="claniqakg0008s4u371cmb38k" data-title="Mbuf" class="article-share-link">Share</a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2022/11/19/type_conversion/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          (no title)
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2022/11/17/mempool/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Mempool</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/language/" rel="tag">language</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2022/11/19/associated_container/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2022/11/19/iterator/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2022/11/19/type_conversion/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2022/11/18/mbuf/">Mbuf</a>
+          </li>
+        
+          <li>
+            <a href="/2022/11/17/mempool/">Mempool</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Data-Structure/">Data Structure</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/dpdk/">dpdk</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">November 2022</a></li></ul>
+    </div>
+  </div>
+
+  
+</aside>
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2022 By Autoload<br>
+      Driven - <a href="https://hexo.io/" target="_blank">Hexo</a>|Theme - <a href="https://github.com/autoload/hexo-theme-auto" target="_blank">Auto</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+  </div>
+</body>
+</html>

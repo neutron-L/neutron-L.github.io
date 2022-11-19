@@ -105,12 +105,20 @@
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">double</span> pi = <span class="number">3.14</span>;</span><br><span class="line"><span class="type">double</span> *ptr = &amp;pi;  <span class="comment">// 错误，常量对象的地址只能使用指向常量的指针保存</span></span><br><span class="line"><span class="type">const</span> <span class="type">double</span> *cptr = &amp;pi;</span><br><span class="line">*cptr = <span class="number">4.2</span>; <span class="comment">// 错误，指向常量的指针无法改变其所指对象的值</span></span><br></pre></td></tr></table></figure>
 <p>指针的类型必须与其所指对象的类型一致，但是有两个例外，第一个例外是，允许一个指向常量的指针指向一个非常量对象。</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">double</span> dval = <span class="number">3.14</span>;</span><br><span class="line"><span class="type">const</span> <span class="type">double</span> *cptr = &amp;dval;</span><br></pre></td></tr></table></figure>
-<p>所谓指向常量的指针或引用，仅仅是自身无法修改所指向的对象或所绑定的对象，而没有规定那个对象的值无法修改。<br>指针是对象，而引用不是，因此允许把指针本身定义为常量。<strong>常量指针</strong></p>
-<h2 id="顶层const和底层const"><a href="#顶层const和底层const" class="headerlink" title="顶层const和底层const"></a>顶层const和底层const</h2>
+<p>所谓指向常量的指针或引用，仅仅是自身无法修改所指向的对象或所绑定的对象，而没有规定那个对象的值无法修改。<br>指针是对象，而引用不是，因此允许把指针本身定义为常量。和其他常量对象相同，<strong>常量指针</strong>必须初始化，且初始化后不能改变指针的值。把*放在const前说明指针本身是一个常量。  </p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> errNum = <span class="number">0</span>;</span><br><span class="line"><span class="type">int</span> i;</span><br><span class="line"><span class="type">int</span> *<span class="type">const</span> curErr = &amp;errNum; <span class="comment">// curErr是一个常量指针，将一直指向errNum</span></span><br><span class="line">*curErr = <span class="number">4</span>;                 <span class="comment">// 可以修改指向的对象，因为该对象不是常量</span></span><br><span class="line">curErr = &amp;i;                 <span class="comment">// 错误 无法修改该指针的值</span></span><br><span class="line"><span class="type">const</span> <span class="type">double</span> pi = <span class="number">3.14</span>;</span><br><span class="line"><span class="type">const</span> <span class="type">double</span> *<span class="type">const</span> pip = &amp;pi; <span class="comment">// pip是一个指向常量对象的常量指针</span></span><br></pre></td></tr></table></figure>
+<p>指针本身是一个常量并不意味着无法通过指针修改其指向对象的值，能否这样做取决于其指向的对象是否为常量。</p>
+<h2 id="顶层const和底层const"><a href="#顶层const和底层const" class="headerlink" title="顶层const和底层const"></a>顶层const和底层const</h2><p>指针本身是一个对象，因此指针本身是否为常量和其指向的对象是否为常量是相互独立的。名词<strong>顶层const</strong>表示指针本身是常量，名词<strong>底层const</strong>表示指向的对象是一个常量。  </p>
+<p>更一般的，顶层const可以表示任何对象是常量，而底层const则与指针和引用等复合类型的基本类型部分有关。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> i = <span class="number">0</span>;</span><br><span class="line"><span class="type">int</span> * <span class="type">const</span> p1 = &amp;i;    <span class="comment">// 顶层const，不能改变p1的值</span></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> ci = <span class="number">42</span>;      <span class="comment">// 顶层const，不能改变ci的值 </span></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> *p2 = &amp;ci;   <span class="comment">// 底层const，可以改变p2的值但不能通过p2改变其指向对象的值</span></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> *<span class="type">const</span> p3 = p2; <span class="comment">// 左边的是底层const，修饰其指向的对象；右边的是顶层const，修饰其本身</span></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> &amp;r = ci; <span class="comment">// 引用的const都是底层const</span></span><br></pre></td></tr></table></figure>
+<p>执行对象拷贝操作时，常量是顶层const还是底层const有明显区别，顶层const不受影响：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">i = ci;</span><br><span class="line">p2 = p3; <span class="comment">// p2和p3指向的对象类型相同</span></span><br></pre></td></tr></table></figure>
+<p>底层const具有限制作用，拷入和拷出的对象必须具备相同的底层const资格，或者两个对象的数据类型必须能够转换，一般来说，非常量可以转换成常量，反之则不行：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> *p = p3;  <span class="comment">// 错误，p3包含底层const</span></span><br><span class="line">p2 = p3;</span><br><span class="line">p2 = &amp;i;</span><br><span class="line"><span class="type">int</span> &amp;r = ci;  <span class="comment">// 错误，普通int&amp;不能绑定到常量</span></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> &amp;r2 = r;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> &amp;cr = i;</span><br><span class="line">p2 = &amp;cr;</span><br><span class="line">p = &amp;cr;  <span class="comment">// 错误，const int *无法转换为int *</span></span><br><span class="line"><span class="type">int</span> &amp;ri = i;</span><br><span class="line">p2= &amp;ri;</span><br></pre></td></tr></table></figure>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://neutron-l.github.io/2022/11/10/const/" data-id="clad8bilk0005xwu37rrl8uko" data-title="const限定符" class="article-share-link">Share</a>
+      <a data-url="https://neutron-l.github.io/2022/11/10/const/" data-id="claniqakb0003s4u33tm36eew" data-title="const限定符" class="article-share-link">Share</a>
       
       
       
@@ -145,7 +153,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/language/" rel="tag">language</a></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/language/" rel="tag">language</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a></li></ul>
     </div>
   </div>
 
@@ -158,11 +166,23 @@
       <ul>
         
           <li>
-            <a href="/2022/11/12/avl_tree/">Avl Tree</a>
+            <a href="/2022/11/19/associated_container/">(no title)</a>
           </li>
         
           <li>
-            <a href="/2022/11/10/const/">const限定符</a>
+            <a href="/2022/11/19/iterator/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2022/11/19/type_conversion/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2022/11/18/mbuf/">Mbuf</a>
+          </li>
+        
+          <li>
+            <a href="/2022/11/17/mempool/">Mempool</a>
           </li>
         
       </ul>
@@ -174,7 +194,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Categories</h3>
     <div class="widget">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Data-Structure/">Data Structure</a></li></ul>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Data-Structure/">Data Structure</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/dpdk/">dpdk</a></li></ul>
     </div>
   </div>
 

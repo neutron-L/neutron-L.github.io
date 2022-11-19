@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>auto decltype | Keep Love</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Keep Love</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/categories">Categories</a>
+        
+          <a class="main-nav-link" href="/tags">Tags</a>
+        
+          <a class="main-nav-link" href="/about">About</a>
+        
+      </nav>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-auto_decltype" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2022/11/14/auto_decltype/" class="article-date">
+  <time class="dt-published" datetime="2022-11-14T02:16:41.756Z" itemprop="datePublished">2022-11-14</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/C/">C++</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      auto decltype
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>有时候程序中会出现难以拼写的复杂类型，或者是有时候程序不知道所需要的变量的类型是什么，C++提供了类型别名、auto类型说明符和decltype类型指示符以处理相应的情况。</p>
+<h2 id="类型别名"><a href="#类型别名" class="headerlink" title="类型别名"></a>类型别名</h2><p>const对象一旦创建后，其值就无法修改，因此必须初始化。初始值可以是任何复杂的表达式，包括常量和变量。  </p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> i = <span class="number">10</span>; <span class="comment">// i是一个已初始化的变量</span></span><br><span class="line"><span class="type">int</span> j; <span class="comment">// j是一个未初始化的变量</span></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> k = <span class="number">9</span>; <span class="comment">// k是一个常量，必须初始化</span></span><br><span class="line">cin &gt;&gt; j;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> a = i;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> b = j;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> c = k;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;i = &quot;</span> &lt;&lt; i &lt;&lt;endl;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;j = &quot;</span> &lt;&lt; j &lt;&lt;endl;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;k = &quot;</span> &lt;&lt; k &lt;&lt;endl;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;a = &quot;</span> &lt;&lt; a &lt;&lt; endl;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;b = &quot;</span> &lt;&lt; b &lt;&lt; endl;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;c = &quot;</span> &lt;&lt; c &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
+<p>输出结果如下：  </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">6</span><br><span class="line">i = 10</span><br><span class="line">j = 6</span><br><span class="line">k = 9</span><br><span class="line">a = 10</span><br><span class="line">b = 6</span><br><span class="line">c = 9</span><br><span class="line">```  </span><br><span class="line">当用i、j和k去初始化a、b和c时，根本无须在意是不是用常量初始化，常量特征仅仅在执行改变该对象的操作时才会发生作用。任何试图改变const对象的内容的行为都是非法的。</span><br><span class="line">```c++</span><br><span class="line">    a = b; // 错误，不能修改常量的值</span><br><span class="line">    const int d; // 错误，常量必须初始化</span><br></pre></td></tr></table></figure>
+
+<h2 id="auto类型说明符"><a href="#auto类型说明符" class="headerlink" title="auto类型说明符"></a>auto类型说明符</h2><p>有时候需要把一个较为复杂的表达式或者类型难以拼写的变量赋值给一个变量，C++11引入了auto类型说明符，可以让编译器分析表达式的值所属的类型，来推算变量的类型，显然，auto定义的变量必须有初始值。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> item = val1 + val2; <span class="comment">// item初始化为val1和val2相加的结果，根据结果可以推断出item的类型</span></span><br></pre></td></tr></table></figure>
+<p>使用auto也能在一条语句中声明多个变量，但语句中所有变量的初始基本数据类型必须一样，<strong>即使是可以相互转换的类型也不行</strong>。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> i = <span class="number">0</span>, *p = &amp;i;     <span class="comment">// 正确，i是int类型，p是指向int的指针</span></span><br><span class="line"><span class="keyword">auto</span> sz = <span class="number">0</span>, pi = <span class="number">3.14</span>;  <span class="comment">// 错误，sz和pi的类型不一致</span></span><br><span class="line"><span class="type">float</span> x = <span class="number">2.1</span>;</span><br><span class="line"><span class="keyword">auto</span> a = x, b = <span class="number">3.14</span>;    <span class="comment">// 错误，x是float类型，而b是double类型</span></span><br><span class="line">Base1 base1;             <span class="comment">// Base1是TopLevel的父类</span></span><br><span class="line">TopLevel t;</span><br><span class="line">Base1 * pb =&amp;t;          <span class="comment">// 正确，基类类型的指针可以指向子类类型对象</span></span><br><span class="line"><span class="keyword">auto</span> u = base1, v = t;   <span class="comment">// 错误，u和v类型不一致</span></span><br></pre></td></tr></table></figure>
+<h3 id="复合类型、常量和auto"><a href="#复合类型、常量和auto" class="headerlink" title="复合类型、常量和auto"></a>复合类型、常量和auto</h3><p>编译器推断出来的auto类型有时和初始值的类型并不完全一样，编译器会适当改变结果类型使其更加符合初始化规则。<br>使用引用其实是使用引用的对象，因此引用作为初始值时，参与初始化的是引用对象的值，编译器以此为auto的类型。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> i = <span class="number">0</span>, &amp;r = i;</span><br><span class="line"><span class="keyword">auto</span> a = r; <span class="comment">// a是int类型</span></span><br></pre></td></tr></table></figure>
+<p>其次，auto一般会忽略掉顶层const，底层const则会保留。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">int</span> ci = i, &amp;cr = ci; <span class="comment">// ci是const int类型，cr是const int&amp;类型</span></span><br><span class="line"><span class="keyword">auto</span> b = ci;           <span class="comment">// b为int，忽略了ci的顶层const</span></span><br><span class="line"><span class="keyword">auto</span> c = cr;           <span class="comment">// c为int，cr是ci的别名，忽略了ci的顶层const</span></span><br><span class="line"><span class="keyword">auto</span> d = &amp;i;          <span class="comment">// d为int*</span></span><br><span class="line"><span class="keyword">auto</span> e = &amp;ci;    <span class="comment">// e为const int*，对常量对象取地址是一种底层const</span></span><br></pre></td></tr></table></figure>
+<p>如果希望推断出的auto类型是一个顶层const，需要明确指出（如上面例子中的cr）：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="keyword">auto</span> f = ci;  <span class="comment">// ci的推演类型是int，f是const int</span></span><br></pre></td></tr></table></figure>
+<p>可以将引用的类型设为auto，初始值中的顶层const仍然保留。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> &amp; g = ci; <span class="comment">// g是一个整型常量的引用</span></span><br><span class="line"><span class="keyword">auto</span> &amp;h = <span class="number">42</span>;             <span class="comment">// 错误，非常量引用无法绑定到字面值</span></span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span> &amp;j = <span class="number">42</span>;       <span class="comment">// 常量引用可以绑定到字面值</span></span><br></pre></td></tr></table></figure>
+<p>一条语句中定义多个变量时，符合&amp;和*只从属于某个声明符，而非数据类型的一部分。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> k = ci, &amp;l = i;        <span class="comment">// k是int，l是int &amp;</span></span><br><span class="line"><span class="keyword">auto</span> &amp;m = ci, *p = &amp;ci; <span class="comment">// m是const int &amp;，p是const int *</span></span><br><span class="line"><span class="keyword">auto</span> &amp;n = i, *p2 = &amp;cr;    <span class="comment">// 错误，n是int&amp;，p2是const int *</span></span><br></pre></td></tr></table></figure>
+<h3 id="多维数组循环遍历中的auto"><a href="#多维数组循环遍历中的auto" class="headerlink" title="多维数组循环遍历中的auto"></a>多维数组循环遍历中的auto</h3><p>c++11新增了范围for语句，因此可以使用其遍历二维数组：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> ia[][<span class="number">4</span>] = &#123;&#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>&#125;, &#123;<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>,<span class="number">8</span>&#125;&#125;;</span><br><span class="line"><span class="keyword">for</span> (<span class="type">const</span> <span class="keyword">auto</span>&amp; row : ia)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span> c : row)</span><br><span class="line">        cout &lt;&lt; c &lt;&lt; <span class="string">&#x27; &#x27;</span>;</span><br><span class="line">    cout &lt;&lt; endl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>除了最内层的循环外，外层循环的控制变量必须是引用类型，否则auto推断类型会把数组转为指针。</p>
+<h2 id="decltype类型指示符"><a href="#decltype类型指示符" class="headerlink" title="decltype类型指示符"></a>decltype类型指示符</h2><p>有时候希望从一个表达式的类型推断出所需要定义的变量的类型，但又不想用该表达式的值初始化变量。c++11引入了类型说明符<strong>decltype</strong>，<br>它的作用是选择并返回操作数的数据类型。编译器并不计算表达式的值。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">f</span><span class="params">()</span> </span>&#123;    <span class="keyword">return</span> <span class="number">1</span>;&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">g</span><span class="params">()</span> </span>&#123;&#125;</span><br><span class="line"><span class="comment">// ……</span></span><br><span class="line"><span class="keyword">decltype</span>(<span class="built_in">f</span>()) i;</span><br><span class="line"><span class="keyword">decltype</span>(<span class="built_in">f</span>())* pi = &amp;i;</span><br><span class="line">*pi = <span class="number">3</span>;</span><br><span class="line">cout &lt;&lt; i &lt;&lt; endl; <span class="comment">// 3</span></span><br></pre></td></tr></table></figure>
+<p>decltype处理顶层const和引用的方式与auto不同，如果decltype使用的表达式是一个变量，则decltype返回该变量的类型（包括顶层const和引用）。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">int</span> ci = <span class="number">0</span>, &amp;cj = ci;</span><br><span class="line"><span class="keyword">decltype</span>(ci) x=<span class="number">0</span>;  <span class="comment">// const int</span></span><br><span class="line"><span class="keyword">decltype</span>(cj) y = x;  <span class="comment">// const int &amp;</span></span><br><span class="line"><span class="keyword">decltype</span>(cj) z; <span class="comment">// const int &amp;，必须初始化</span></span><br></pre></td></tr></table></figure>
+<p>其次，如果decltype使用的表达式不是一个变量，则返回该表达式结果对应的类型，如果表达式结果可赋值，则得到引用类型。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> i = <span class="number">42</span>, *p = &amp;i, &amp;r=i;</span><br><span class="line"><span class="keyword">decltype</span>(r+<span class="number">0</span>)b; <span class="comment">// int</span></span><br><span class="line"><span class="keyword">decltype</span>(*p) c; <span class="comment">// int &amp;，必须初始化</span></span><br><span class="line"><span class="keyword">decltype</span>(*p+<span class="number">0</span>) d; <span class="comment">// int </span></span><br></pre></td></tr></table></figure>
+<p>如果表达式的结果是左值类型，则返回一个引用，注意还有不可修改的左值——数组：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> ia[][<span class="number">4</span>] = &#123;&#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>&#125;, &#123;<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>,<span class="number">8</span>&#125;&#125;;</span><br><span class="line"><span class="type">int</span> ib[] = &#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>&#125;;</span><br><span class="line"><span class="keyword">decltype</span>(ia[<span class="number">1</span>]) x= ib; <span class="comment">// x是int(&amp;)[4] ia[1]是一个不可修改的左值</span></span><br><span class="line"><span class="keyword">decltype</span>(ib) y;  <span class="comment">// int[4]</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">decltype</span>(ia[<span class="number">0</span>]) row : ia) <span class="comment">// int (&amp;)[4]</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span> c : row)</span><br><span class="line">        cout &lt;&lt; c &lt;&lt; <span class="string">&#x27; &#x27;</span>;</span><br><span class="line">    cout &lt;&lt; endl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对于变量，如果加上了括号，则被当作表达式，而变量是可赋值的特殊表达式，因此会返回引用类型。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">decltype</span>(((i))) d; <span class="comment">// int &amp;</span></span><br><span class="line"><span class="keyword">decltype</span>((*p + <span class="number">0</span>)) e; <span class="comment">// int，*p+0是一个临时量无法赋值</span></span><br></pre></td></tr></table></figure>
+<p>另外与auto不同的地方是，当数组作为一个auto变量的初始值时，推断得到的类型是指针，而decltype关键字不会发生上述转换：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> ia[] = &#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>&#125;;</span><br><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">ia2</span><span class="params">(ia)</span></span>; <span class="comment">// ia2 是int*，等同于auto ia2(&amp;ia[0])</span></span><br><span class="line"><span class="keyword">decltype</span>(ia) ia3 = &#123;<span class="number">0</span>,<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;; <span class="comment">// ia3是int[4]</span></span><br><span class="line">ia3[<span class="number">1</span>] = <span class="number">9</span>;</span><br><span class="line"><span class="keyword">return</span> <span class="number">0</span>;</span><br></pre></td></tr></table></figure>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://neutron-l.github.io/2022/11/14/auto_decltype/" data-id="claniqak80001s4u3c2ik3ytc" data-title="auto decltype" class="article-share-link">Share</a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/language/" rel="tag">language</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2022/11/17/ring/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Ring
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2022/11/12/avl_tree/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Avl Tree</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/language/" rel="tag">language</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2022/11/19/associated_container/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2022/11/19/iterator/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2022/11/19/type_conversion/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2022/11/18/mbuf/">Mbuf</a>
+          </li>
+        
+          <li>
+            <a href="/2022/11/17/mempool/">Mempool</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Data-Structure/">Data Structure</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/dpdk/">dpdk</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">November 2022</a></li></ul>
+    </div>
+  </div>
+
+  
+</aside>
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2022 By Autoload<br>
+      Driven - <a href="https://hexo.io/" target="_blank">Hexo</a>|Theme - <a href="https://github.com/autoload/hexo-theme-auto" target="_blank">Auto</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+  </div>
+</body>
+</html>

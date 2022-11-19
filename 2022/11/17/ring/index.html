@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Ring | Keep Love</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Keep Love</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/categories">Categories</a>
+        
+          <a class="main-nav-link" href="/tags">Tags</a>
+        
+          <a class="main-nav-link" href="/about">About</a>
+        
+      </nav>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-ring" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2022/11/17/ring/" class="article-date">
+  <time class="dt-published" datetime="2022-11-17T05:57:56.045Z" itemprop="datePublished">2022-11-17</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/dpdk/">dpdk</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      Ring
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>ring，即rte_ring，是dpdk中的一种用于存取数据的基础数据结构，本质上是一种无锁实现的环形队列（lock-free）。</p>
+<h1 id="Feature"><a href="#Feature" class="headerlink" title="Feature"></a>Feature</h1><ul>
+<li>FIFO</li>
+<li>maximum size是固定的，指针存放在一个table中</li>
+<li>无锁实现</li>
+<li>支持多消费者或单消费者出队</li>
+<li>支持多生产者或单生产者入队</li>
+<li>Bulk operate：入队或出队指定数量的对象，或成功或失败</li>
+<li>Burst operate：入队或出队指定数量的对象，或成功或返回最大何用对象</li>
+</ul>
+<h2 id="Advantages"><a href="#Advantages" class="headerlink" title="Advantages"></a>Advantages</h2><ul>
+<li>Faster，操作很快只需要简单的CAS指令</li>
+<li>比完全无锁实现的队列简单</li>
+<li>适用于批量入队&#x2F;出队操作（bulk operations）。通过操作一个table中的指针完成操作，不会造成大量cache miss。</li>
+</ul>
+<h2 id="Disadvantages"><a href="#Disadvantages" class="headerlink" title="Disadvantages"></a>Disadvantages</h2><ul>
+<li>大小固定不够灵活</li>
+<li>内存使用效率不如链表组织的队列</li>
+</ul>
+<p><img src="https://doc.dpdk.org/guides-18.08/_images/ring1.svg" title="Ring Structure"></p>
+<h2 id="Use-cases"><a href="#Use-cases" class="headerlink" title="Use cases"></a>Use cases</h2><ul>
+<li>DPDK中应用程序的通信</li>
+<li>用于内存池分配器</li>
+</ul>
+<h1 id="Operations"><a href="#Operations" class="headerlink" title="Operations"></a>Operations</h1><h2 id="Single-Producer-Enqueue"><a href="#Single-Producer-Enqueue" class="headerlink" title="Single Producer Enqueue"></a>Single Producer Enqueue</h2><p>初始状态：<br><img src="https://doc.dpdk.org/guides-18.08/_images/ring-enqueue1.svg"> </p>
+<ul>
+<li>Step-1: 共享内存中的变量prod_head和cons_tail被复制到本地局部变量prod_head和cons_tail，局部变量prod_next指向表中接下来的一个或几个元素；</li>
+<li>Step-2: 通过cons_tail判断是否没有足够的空闲空间；</li>
+<li>Step-3: 取出prod_head处的元素，通过CAS指令判断是否轮到当前线程继续执行，若是则将全局prod_head的值指向局部变量prod_next，反之继续从第一步开始执行；<br>中间状态：<br><img src="https://doc.dpdk.org/guides-18.08/_images/ring-enqueue2.svg"></li>
+<li>Step-4: 修改全局prod_tail的值指向全局prod_head。</li>
+</ul>
+<p>最终状态：<br><img src="https://doc.dpdk.org/guides-18.08/_images/ring-enqueue3.svg"></p>
+<h2 id="Single-Consumer-Dequeue"><a href="#Single-Consumer-Dequeue" class="headerlink" title="Single Consumer Dequeue"></a>Single Consumer Dequeue</h2><p>初始状态：<br><img src="https://doc.dpdk.org/guides-18.08/_images/ring-dequeue1.svg"><br>Steps:</p>
+<ul>
+<li>Step-1: 将全局cons_head和全局prod_tail复制到本地局部变量cons_head和prod_tail，局部变量cons_next指向table中的下一个或几个元素，如果没有足够空间返回error；</li>
+<li>Step-2: 通过prod_tail判断是否没有足够的空闲空间；</li>
+<li>Step-3: 通过CAS指令判断是否由当前线程执行，若是则修改全局cons_head的值执行局部变量cons_next，反之则重新开始循环，执行第一步；<br>中间状态：<br><img src="https://doc.dpdk.org/guides-18.08/_images/ring-dequeue2.svg"></li>
+<li>Step-4: 修改全局cons_tail指向cons_head。<br>最终状态：<br><img src="https://doc.dpdk.org/guides-18.08/_images/ring-dequeue3.svg"></li>
+</ul>
+<h2 id="Multiple-Producer-Enqueue"><a href="#Multiple-Producer-Enqueue" class="headerlink" title="Multiple Producer Enqueue"></a>Multiple Producer Enqueue</h2><ul>
+<li>Step-1: 将全局prod_head和全局cons_tail复制到本地局部变量prod_head和cons_tail，局部变量prod_next指向table中的下一个或几个元素，如果没有足够空间返回error；<br>初始状态：<br><img src="https://doc.dpdk.org/guides-18.08/_images/ring-mp-enqueue1.svg"></li>
+<li>Step-2: 修改全局prod_head的值，使其指向prod_next，通过CAS指令，原子执行如下操作：<ul>
+<li>如果全局prod_head和当前局部变量prod_head不同，则CAS指令执行失败，重新执行第一步；</li>
+<li>否则，更新全局prod_head指向prod_next，继续执行。</li>
+</ul>
+</li>
+</ul>
+<p>中间状态：<br><img src="https://doc.dpdk.org/guides-18.08/_images/ring-mp-enqueue4.svg"></p>
+<ul>
+<li>Step-3: 直到全局的prod_tail等于当前局部变量prod_tail时，更新全局的prod_tail等于全局的prod_head。</li>
+</ul>
+<p>最终状态：<br><img src="https://doc.dpdk.org/guides-18.08/_images/ring-mp-enqueue5.svg"></p>
+<h2 id="Multiple-Consumer-Dequeue"><a href="#Multiple-Consumer-Dequeue" class="headerlink" title="Multiple Consumer Dequeue"></a>Multiple Consumer Dequeue</h2><ul>
+<li>Step-1: 将全局prod_tail和全局cons_head复制到本地局部变量prod_tail和cons_head，局部变量cons_next指向table中的下一个或几个元素，如果没有足够空间返回error；</li>
+<li>Step-2: 修改全局cons_head的值，使其指向cons_next，通过CAS指令，原子执行如下操作：<ul>
+<li>如果全局cons_head和当前局部变量cons_head不同，则CAS指令执行失败，重新执行第一步；</li>
+<li>否则，更新全局cons_head指向cons_next，继续执行。</li>
+</ul>
+</li>
+<li>Step-3: 直到全局的cons_tail等于当前局部变量cons_tail时，更新全局的cons_tail等于全局的cons_head。</li>
+</ul>
+<h1 id="Implementation"><a href="#Implementation" class="headerlink" title="Implementation"></a>Implementation</h1><h2 id="struct"><a href="#struct" class="headerlink" title="struct"></a>struct</h2><p>两对&lt;head，tail&gt;，包括生产者相关的br_prod_head和br_prod_tail，以及消费者相关的br_cons_head和br_cons_tail，均用volatile修饰，保证每次读取时都是内存中的最新值。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">buf_ring</span> &#123;</span></span><br><span class="line">	<span class="keyword">volatile</span> <span class="type">uint32_t</span>	br_prod_head;</span><br><span class="line">	<span class="keyword">volatile</span> <span class="type">uint32_t</span>	br_prod_tail;	</span><br><span class="line">	<span class="type">int</span>              	br_prod_size;</span><br><span class="line">	<span class="type">int</span>              	br_prod_mask;</span><br><span class="line">	<span class="type">uint64_t</span>		br_drops;</span><br><span class="line">	<span class="type">uint64_t</span>		br_prod_bufs;</span><br><span class="line">	<span class="type">uint64_t</span>		br_prod_bytes;</span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * Pad out to next L2 cache line</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="type">uint64_t</span>	  	_pad0[<span class="number">11</span>];</span><br><span class="line"></span><br><span class="line">	<span class="keyword">volatile</span> <span class="type">uint32_t</span>	br_cons_head;</span><br><span class="line">	<span class="keyword">volatile</span> <span class="type">uint32_t</span>	br_cons_tail;</span><br><span class="line">	<span class="type">int</span>		 	br_cons_size;</span><br><span class="line">	<span class="type">int</span>              	br_cons_mask;</span><br><span class="line">	</span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * Pad out to next L2 cache line</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="type">uint64_t</span>	  	_pad1[<span class="number">14</span>];</span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> DEBUG_BUFRING</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">mtx</span>		*<span class="title">br_lock</span>;</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span>	</span></span><br><span class="line">	<span class="type">void</span>			*br_ring[<span class="number">0</span>];</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h2 id="Single-Producer-Enqueue-1"><a href="#Single-Producer-Enqueue-1" class="headerlink" title="Single Producer Enqueue"></a>Single Producer Enqueue</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">```</span><br><span class="line">## Single Consumer Dequeue</span><br><span class="line">因为没有其他的consumer，每次唯一的consumer只需要判断当前是否存在可用element即可。</span><br><span class="line">```c</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * single-consumer dequeue </span></span><br><span class="line"><span class="comment"> * use where dequeue is protected by a lock</span></span><br><span class="line"><span class="comment"> * e.g. a network driver&#x27;s tx queue lock</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="type">static</span> __inline <span class="type">void</span> *</span><br><span class="line"><span class="title function_">buf_ring_dequeue_sc</span><span class="params">(<span class="keyword">struct</span> buf_ring *br)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// local variable, copy from br_cons_head和prod_tail</span></span><br><span class="line">	<span class="type">uint32_t</span> cons_head, cons_next, cons_next_next;</span><br><span class="line">	<span class="type">uint32_t</span> prod_tail;</span><br><span class="line">	<span class="type">void</span> *buf;</span><br><span class="line">	</span><br><span class="line">	cons_head = br-&gt;br_cons_head;</span><br><span class="line">	prod_tail = br-&gt;br_prod_tail;</span><br><span class="line">	</span><br><span class="line">    <span class="comment">// 下一个和下下一个元素位置</span></span><br><span class="line">	cons_next = (cons_head + <span class="number">1</span>) &amp; br-&gt;br_cons_mask;</span><br><span class="line">	cons_next_next = (cons_head + <span class="number">2</span>) &amp; br-&gt;br_cons_mask;</span><br><span class="line">	</span><br><span class="line">    <span class="comment">// 没有元素，cons_head指向的是下一个需要消费的&quot;对象&quot;</span></span><br><span class="line">    <span class="comment">// prod_tail指向下一个加入的对象的位置</span></span><br><span class="line">	<span class="keyword">if</span> (cons_head == prod_tail) </span><br><span class="line">		<span class="keyword">return</span> (<span class="literal">NULL</span>);</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> PREFETCH_DEFINED	</span></span><br><span class="line"><span class="comment">// profetch</span></span><br><span class="line">	<span class="keyword">if</span> (cons_next != prod_tail) &#123;		</span><br><span class="line">		prefetch(br-&gt;br_ring[cons_next]);</span><br><span class="line">		<span class="keyword">if</span> (cons_next_next != prod_tail) </span><br><span class="line">			prefetch(br-&gt;br_ring[cons_next_next]);</span><br><span class="line">	&#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"><span class="comment">// 更新全局cnns_head</span></span><br><span class="line">	br-&gt;br_cons_head = cons_next;</span><br><span class="line">	buf = br-&gt;br_ring[cons_head];</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> DEBUG_BUFRING</span></span><br><span class="line">	br-&gt;br_ring[cons_head] = <span class="literal">NULL</span>;</span><br><span class="line">	<span class="keyword">if</span> (!mtx_owned(br-&gt;br_lock))</span><br><span class="line">		panic(<span class="string">&quot;lock not held on single consumer dequeue&quot;</span>);</span><br><span class="line">	<span class="keyword">if</span> (br-&gt;br_cons_tail != cons_head)</span><br><span class="line">		panic(<span class="string">&quot;inconsistent list cons_tail=%d cons_head=%d&quot;</span>,</span><br><span class="line">		    br-&gt;br_cons_tail, cons_head);</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"><span class="comment">// 更新全局cons_tail</span></span><br><span class="line">	br-&gt;br_cons_tail = cons_next;</span><br><span class="line">	<span class="keyword">return</span> (buf);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Multiple-Producer-Enqueue-1"><a href="#Multiple-Producer-Enqueue-1" class="headerlink" title="Multiple Producer Enqueue"></a>Multiple Producer Enqueue</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * multi-producer safe lock-free ring buffer enqueue</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="type">static</span> __inline <span class="type">int</span></span><br><span class="line"><span class="title function_">buf_ring_enqueue_bytes</span><span class="params">(<span class="keyword">struct</span> buf_ring *br, <span class="type">void</span> *buf, <span class="type">int</span> nbytes)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// local variable </span></span><br><span class="line">	<span class="type">uint32_t</span> prod_head, prod_next;</span><br><span class="line">	<span class="type">uint32_t</span> cons_tail;</span><br><span class="line">	<span class="type">int</span> success;</span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> DEBUG_BUFRING</span></span><br><span class="line">	<span class="type">int</span> i;</span><br><span class="line">    <span class="comment">// Check whether buf has enqueued</span></span><br><span class="line">	<span class="keyword">for</span> (i = br-&gt;br_cons_head; i != br-&gt;br_prod_head;</span><br><span class="line">	     i = ((i + <span class="number">1</span>) &amp; br-&gt;br_cons_mask))</span><br><span class="line">		<span class="keyword">if</span>(br-&gt;br_ring[i] == buf)</span><br><span class="line">			panic(<span class="string">&quot;buf=%p already enqueue at %d prod=%d cons=%d&quot;</span>,</span><br><span class="line">			    buf, i, br-&gt;br_prod_tail, br-&gt;br_cons_tail);</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span>	</span></span><br><span class="line">	critical_enter();</span><br><span class="line">	<span class="keyword">do</span> &#123;</span><br><span class="line">        <span class="comment">// 读取最新的全局prod_head和prod_tail</span></span><br><span class="line">		prod_head = br-&gt;br_prod_head;</span><br><span class="line">		cons_tail = br-&gt;br_cons_tail;</span><br><span class="line"></span><br><span class="line">		prod_next = (prod_head + <span class="number">1</span>) &amp; br-&gt;br_prod_mask;</span><br><span class="line">		</span><br><span class="line">        <span class="comment">// check是否还有空闲空间</span></span><br><span class="line">		<span class="keyword">if</span> (prod_next == cons_tail) &#123;</span><br><span class="line">			critical_exit();</span><br><span class="line">			<span class="keyword">return</span> (ENOBUFS);</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">        <span class="comment">// 如果当前全局prod_head和本地局部prod_head相同，则更新全局prod_head为prod_next</span></span><br><span class="line">		success = atomic_cmpset_int(&amp;br-&gt;br_prod_head, prod_head,</span><br><span class="line">		    prod_next);</span><br><span class="line">	&#125; <span class="keyword">while</span> (success == <span class="number">0</span>);</span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> DEBUG_BUFRING</span></span><br><span class="line">	<span class="keyword">if</span> (br-&gt;br_ring[prod_head] != <span class="literal">NULL</span>)</span><br><span class="line">		panic(<span class="string">&quot;dangling value in enqueue&quot;</span>);</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span>	</span></span><br><span class="line"><span class="comment">// 入队，保存buf</span></span><br><span class="line">	br-&gt;br_ring[prod_head] = buf;</span><br><span class="line">	wmb();</span><br><span class="line"></span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * If there are other enqueues in progress</span></span><br><span class="line"><span class="comment">	 * that preceeded us, we need to wait for them</span></span><br><span class="line"><span class="comment">	 * to complete </span></span><br><span class="line"><span class="comment">	 */</span>   </span><br><span class="line">    <span class="comment">// 等待已经更新完的线程执行完</span></span><br><span class="line">	<span class="keyword">while</span> (br-&gt;br_prod_tail != prod_head)</span><br><span class="line">		cpu_spinwait();</span><br><span class="line">	br-&gt;br_prod_bufs++;</span><br><span class="line">	br-&gt;br_prod_bytes += nbytes;</span><br><span class="line">	br-&gt;br_prod_tail = prod_next;</span><br><span class="line">    <span class="comment">// 退出临界区</span></span><br><span class="line">	critical_exit();</span><br><span class="line">	<span class="keyword">return</span> (<span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="Multiple-Consumer-Dequeue-1"><a href="#Multiple-Consumer-Dequeue-1" class="headerlink" title="Multiple Consumer Dequeue"></a>Multiple Consumer Dequeue</h2><p>存在多个consumer，通过实现CAS指令功能的atomic_cmpset_int，同步对全局变量的更新操作。有可能存在一个线程，她在当前线程之前已经完成对全局cons_head更新，该线程的局部cons_next的值比当前线程的局部cons_next小，因此该线程需要先执行完毕对全局cons_tail的修改（否则当前线程更新完全局cons_tail后，这个值会被另一位线程修改为一个更小的值）。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"> * multi-consumer safe dequeue </span><br><span class="line"> *</span><br><span class="line"> */</span><br><span class="line"><span class="type">static</span> __inline <span class="type">void</span> *</span><br><span class="line"><span class="title function_">buf_ring_dequeue_mc</span><span class="params">(<span class="keyword">struct</span> buf_ring *br)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// local variable</span></span><br><span class="line">	<span class="type">uint32_t</span> cons_head, cons_next;</span><br><span class="line">	<span class="type">uint32_t</span> prod_tail;</span><br><span class="line">	<span class="type">void</span> *buf;</span><br><span class="line">	<span class="type">int</span> success;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 进入临界区</span></span><br><span class="line">	critical_enter();</span><br><span class="line">	<span class="keyword">do</span> &#123;</span><br><span class="line">        <span class="comment">// 读取最新的全局cons_head和cons_tail</span></span><br><span class="line">		cons_head = br-&gt;br_cons_head;</span><br><span class="line">		prod_tail = br-&gt;br_prod_tail;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// update cons_next</span></span><br><span class="line">		cons_next = (cons_head + <span class="number">1</span>) &amp; br-&gt;br_cons_mask;</span><br><span class="line">		</span><br><span class="line">        <span class="comment">// 没有可用元素，退出</span></span><br><span class="line">		<span class="keyword">if</span> (cons_head == prod_tail) &#123;</span><br><span class="line">			critical_exit();</span><br><span class="line">			<span class="keyword">return</span> (<span class="literal">NULL</span>);</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">        <span class="comment">// 更新全局cons_head</span></span><br><span class="line">		success = atomic_cmpset_int(&amp;br-&gt;br_cons_head, cons_head,</span><br><span class="line">		    cons_next);</span><br><span class="line">	&#125; <span class="keyword">while</span> (success == <span class="number">0</span>);		</span><br><span class="line"></span><br><span class="line">	buf = br-&gt;br_ring[cons_head];</span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> DEBUG_BUFRING</span></span><br><span class="line">	br-&gt;br_ring[cons_head] = <span class="literal">NULL</span>;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">	rmb();</span><br><span class="line">	</span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * If there are other dequeues in progress</span></span><br><span class="line"><span class="comment">	 * that preceeded us, we need to wait for them</span></span><br><span class="line"><span class="comment">	 * to complete </span></span><br><span class="line"><span class="comment">	 */</span>   </span><br><span class="line">    <span class="comment">// 等待在当前线程更新全局cons_head之前的线程执行完毕</span></span><br><span class="line">	<span class="keyword">while</span> (br-&gt;br_cons_tail != cons_head)</span><br><span class="line">		cpu_spinwait();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// update global cons_next and exit</span></span><br><span class="line">	br-&gt;br_cons_tail = cons_next;</span><br><span class="line">	critical_exit();</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> (buf);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="Another"><a href="#Another" class="headerlink" title="Another"></a>Another</h1>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://neutron-l.github.io/2022/11/17/ring/" data-id="claniqakj000ds4u3hzich8ch" data-title="Ring" class="article-share-link">Share</a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2022/11/17/mempool/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Mempool
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2022/11/14/auto_decltype/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">auto decltype</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/language/" rel="tag">language</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2022/11/19/associated_container/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2022/11/19/iterator/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2022/11/19/type_conversion/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2022/11/18/mbuf/">Mbuf</a>
+          </li>
+        
+          <li>
+            <a href="/2022/11/17/mempool/">Mempool</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Data-Structure/">Data Structure</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/dpdk/">dpdk</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">November 2022</a></li></ul>
+    </div>
+  </div>
+
+  
+</aside>
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2022 By Autoload<br>
+      Driven - <a href="https://hexo.io/" target="_blank">Hexo</a>|Theme - <a href="https://github.com/autoload/hexo-theme-auto" target="_blank">Auto</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+  </div>
+</body>
+</html>
