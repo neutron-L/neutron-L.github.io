@@ -644,6 +644,12 @@
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">i = ci;</span><br><span class="line">p2 = p3; <span class="comment">// p2和p3指向的对象类型相同</span></span><br></pre></td></tr></table></figure>
 <p>底层const具有限制作用，拷入和拷出的对象必须具备相同的底层const资格，或者两个对象的数据类型必须能够转换，一般来说，非常量可以转换成常量，反之则不行：</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> *p = p3;  <span class="comment">// 错误，p3包含底层const</span></span><br><span class="line">p2 = p3;</span><br><span class="line">p2 = &amp;i;</span><br><span class="line"><span class="type">int</span> &amp;r = ci;  <span class="comment">// 错误，普通int&amp;不能绑定到常量</span></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> &amp;r2 = r;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> &amp;cr = i;</span><br><span class="line">p2 = &amp;cr;</span><br><span class="line">p = &amp;cr;  <span class="comment">// 错误，const int *无法转换为int *</span></span><br><span class="line"><span class="type">int</span> &amp;ri = i;</span><br><span class="line">p2= &amp;ri;</span><br></pre></td></tr></table></figure>
+<p>总结decltype取得引用的情况：</p>
+<ul>
+<li>表达式的结果是左值（可赋值和不可赋值）</li>
+<li>表达式是一个变量，变量本身是一个引用或者变量加了一层或多层括号</li>
+</ul>
+
       
     </div>
     <footer class="article-footer">
