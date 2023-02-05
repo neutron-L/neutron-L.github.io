@@ -54,7 +54,7 @@
 </a>
     
   <div class="article-category">
-    <a class="article-category-link" href="/categories/tool/">tool</a>
+    <a class="article-category-link" href="/categories/Tool/">Tool</a>
   </div>
 
   </div>
@@ -65,7 +65,7 @@
         
   
     <h1 itemprop="name">
-      <a class="p-name article-title" href="/2023/02/05/git_reset_checkout/">git reset与checkout</a>
+      <a class="p-name article-title" href="/2023/02/05/git_reset_checkout/">reset与checkout</a>
     </h1>
   
 
@@ -85,7 +85,7 @@
 <li>执行git diff –staged，查看暂存区和仓库最新提交的差异</li>
 <li>执行git diff HEAD，查看工作目录与仓库最新的提交的差异</li>
 </ul>
-<p>平时，开发项目的时候，可能想舍弃当前工作目录中的修改内容，或者将某一源文件还原到前几次提交的某一次提交时的内容，我们可以使用git checkout和git reset命令完成，但这两个命令有一定的差别，而且有时候使用不当可能造成我们意想不到的结果，很可能最新修改好的程序就被覆盖了。本文通过一个小实验探究reset和checkout的功能以及差异。</p>
+<p>平时，开发项目的时候，我们可能想舍弃当前工作目录中的修改内容，或者将某一源文件还原到前几次提交的某一次提交时的内容，这时候我们想起了git中的checkout和reset好像有某些类似的功能，可以协助我们完成。但这两个命令有一定的差别，使用不当可能造成意想不到的结果，很可能最新修改好的程序就被覆盖了。本文通过一个小实验探究reset和checkout的功能以及差异。</p>
 <h2 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h2><p>初始化一个目录为git仓库，目录中包含两个文件  </p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&gt; <span class="built_in">mkdir</span> <span class="built_in">test</span></span><br><span class="line">&gt; <span class="built_in">cd</span> <span class="built_in">test</span>/ </span><br><span class="line">&gt; git init</span><br></pre></td></tr></table></figure>
 <p>创建两个文件foo和bar，并写入第一条字符串”this is history1”，执行git status查看当前状态</p>
@@ -179,7 +179,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://neutron-l.github.io/2023/02/05/git_reset_checkout/" data-id="cldr3air80000tsu34w9hho6s" data-title="git reset与checkout" class="article-share-link">Share</a>
+      <a data-url="https://neutron-l.github.io/2023/02/05/git_reset_checkout/" data-id="cldr3air80000tsu34w9hho6s" data-title="reset与checkout" class="article-share-link">Share</a>
       
       
       
@@ -979,7 +979,7 @@
       <ul>
         
           <li>
-            <a href="/2023/02/05/git_reset_checkout/">git reset与checkout</a>
+            <a href="/2023/02/05/git_reset_checkout/">reset与checkout</a>
           </li>
         
           <li>
@@ -1007,7 +1007,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Categories</h3>
     <div class="widget">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Data-Structure/">Data Structure</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/computer-system/">computer system</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/dpdk/">dpdk</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/tool/">tool</a></li></ul>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Data-Structure/">Data Structure</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Tool/">Tool</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/computer-system/">computer system</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/dpdk/">dpdk</a></li></ul>
     </div>
   </div>
 
