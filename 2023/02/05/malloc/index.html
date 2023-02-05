@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>malloc | Keep Love</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Keep Love</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/categories">Categories</a>
+        
+          <a class="main-nav-link" href="/tags">Tags</a>
+        
+          <a class="main-nav-link" href="/about">About</a>
+        
+      </nav>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-malloc" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/02/05/malloc/" class="article-date">
+  <time class="dt-published" datetime="2023-02-05T10:14:10.513Z" itemprop="datePublished">2023-02-05</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/Computer-System/">Computer System</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      malloc
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>本文探究malloc执行背后涉及的系统调用，以及分配大内存和小内存的执行差别。在此之前先说明一些关于malloc的“传闻”：通过brk系统调用控制heap的增长，自身负责管理一些内存块，对于可以满足的分配需求，可以在用户态下直接分配已有的空闲内存块完成；对于大内存需求，调用mmap系统调用。</p>
+<h2 id="a-simple-example"><a href="#a-simple-example" class="headerlink" title="a simple example"></a>a simple example</h2><p>使用一个简单的示例程序，程序分别调用malloc分配小块内存(1KB)和大块内存(1GB)</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> MEM_SIZE (1&lt;&lt;10)</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> **argv)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;I am %d\n&quot;</span>, getpid());</span><br><span class="line">    getchar();</span><br><span class="line">    <span class="type">char</span> *big = <span class="built_in">malloc</span>(MEM_SIZE);</span><br><span class="line">    <span class="type">char</span> *small = <span class="built_in">malloc</span>(<span class="number">1</span>&lt;&lt;<span class="number">10</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;address: %p %p\n&quot;</span>, big, small);</span><br><span class="line">    getchar();</span><br><span class="line">    <span class="built_in">free</span>(big);</span><br><span class="line">    <span class="built_in">free</span>(small);</span><br><span class="line">    getchar();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>同时，我们通过查看进程的内存映射情况，确定heap的范围，以及小内存和大内存分别处于哪块内存区域。在程序中插入了getchar()，方便在分配内存前、分配内存后、释放内存后分别查看内存映射的情况。我们将三个阶段的映射数据分别保存在before、alloc和free的文件中，并通过对比三个文件的差异，可得知malloc和free对内存映射的影响。<br>第一步，设置MEM_SIZE为1&lt;&lt;10，与小内存大小相同，即均为1KB时，编译并运行main，由于getchar()的存在，程序会有一些停顿（以下程序的输出做了些许调整，与正常输出不同）</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&gt; gcc main.c -g -o main</span><br><span class="line">&gt; ./main</span><br><span class="line">I am <span class="number">153825</span></span><br><span class="line">address: <span class="number">0x555555559ac0</span> <span class="number">0x555555559ed0</span></span><br></pre></td></tr></table></figure>
+<p>在程序停顿时，另开一窗口，每次停顿后分别执行</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&gt; <span class="built_in">cat</span> /proc/153825/maps &gt; Templates/before </span><br><span class="line">&gt; <span class="built_in">cat</span> /proc/153825/maps &gt; Templates/alloc </span><br><span class="line">&gt; <span class="built_in">cat</span> /proc/153825/maps &gt; Templates/free </span><br><span class="line">```  </span><br><span class="line">使用diff命令检查三个文件的不同</span><br><span class="line">```bash</span><br><span class="line">&gt; diff before alloc </span><br><span class="line">&gt; diff alloc free </span><br></pre></td></tr></table></figure>
+<p>使用strace跟踪mmap的调用情况</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7ffff7fbb000</span><br><span class="line">mmap(NULL, 71183, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7ffff7fa9000</span><br><span class="line">mmap(NULL, 2260560, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7ffff7d81000</span><br><span class="line">mmap(0x7ffff7da9000, 1658880, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x28000) = 0x7ffff7da9000</span><br><span class="line">mmap(0x7ffff7f3e000, 360448, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1bd000) = 0x7ffff7f3e000</span><br><span class="line">mmap(0x7ffff7f96000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x214000) = 0x7ffff7f96000</span><br><span class="line">mmap(0x7ffff7f9c000, 52816, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7ffff7f9c000</span><br><span class="line">mmap(NULL, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7ffff7d7e000</span><br><span class="line">I am 154037</span><br><span class="line"></span><br><span class="line">address: 0x555555559ac0 0x555555559ed0</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">+++ exited with 0 +++</span><br></pre></td></tr></table></figure>
+<p>在输出”I am …”信息后，并未调用mmap系统调用。<br>三个文件内容相同，且未调用mmap。malloc分配小内存时，进程的内存映射没有变化，查看三个文件中任一一个的内容：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">&gt; <span class="built_in">cat</span> before </span><br><span class="line">555555554000-555555555000 r--p 00000000 08:03 271805                     /home/rda/Templates/main</span><br><span class="line">555555555000-555555556000 r-xp 00001000 08:03 271805                     /home/rda/Templates/main</span><br><span class="line">555555556000-555555557000 r--p 00002000 08:03 271805                     /home/rda/Templates/main</span><br><span class="line">555555557000-555555558000 r--p 00002000 08:03 271805                     /home/rda/Templates/main</span><br><span class="line">555555558000-555555559000 rw-p 00003000 08:03 271805                     /home/rda/Templates/main</span><br><span class="line">555555559000-55555557a000 rw-p 00000000 00:00 0                          [heap]</span><br><span class="line">7ffff7d7e000-7ffff7d81000 rw-p 00000000 00:00 0 </span><br><span class="line">7ffff7d81000-7ffff7da9000 r--p 00000000 08:03 526570                     /usr/lib/x86_64-linux-gnu/libc.so.6</span><br><span class="line">7ffff7da9000-7ffff7f3e000 r-xp 00028000 08:03 526570                     /usr/lib/x86_64-linux-gnu/libc.so.6</span><br><span class="line">7ffff7f3e000-7ffff7f96000 r--p 001bd000 08:03 526570                     /usr/lib/x86_64-linux-gnu/libc.so.6</span><br><span class="line">7ffff7f96000-7ffff7f9a000 r--p 00214000 08:03 526570                     /usr/lib/x86_64-linux-gnu/libc.so.6</span><br><span class="line">7ffff7f9a000-7ffff7f9c000 rw-p 00218000 08:03 526570                     /usr/lib/x86_64-linux-gnu/libc.so.6</span><br><span class="line">7ffff7f9c000-7ffff7fa9000 rw-p 00000000 00:00 0 </span><br><span class="line">7ffff7fbb000-7ffff7fbd000 rw-p 00000000 00:00 0 </span><br><span class="line">7ffff7fbd000-7ffff7fc1000 r--p 00000000 00:00 0                          [vvar]</span><br><span class="line">7ffff7fc1000-7ffff7fc3000 r-xp 00000000 00:00 0                          [vdso]</span><br><span class="line">7ffff7fc3000-7ffff7fc5000 r--p 00000000 08:03 526564                     /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2</span><br><span class="line">7ffff7fc5000-7ffff7fef000 r-xp 00002000 08:03 526564                     /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2</span><br><span class="line">7ffff7fef000-7ffff7ffa000 r--p 0002c000 08:03 526564                     /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2</span><br><span class="line">7ffff7ffb000-7ffff7ffd000 r--p 00037000 08:03 526564                     /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2</span><br><span class="line">7ffff7ffd000-7ffff7fff000 rw-p 00039000 08:03 526564                     /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2</span><br><span class="line">7ffffffde000-7ffffffff000 rw-p 00000000 00:00 0                          [stack]</span><br><span class="line">ffffffffff600000-ffffffffff601000 --xp 00000000 00:00 0                  [vsyscall]</span><br></pre></td></tr></table></figure>
+<p>heap的范围为555555559000-55555557a000，而p和q的地址分别为0x555555559ac0和0x555555559ed0，均位于其中。因此，malloc会管理一个预先分配好的heap，如果请求分配的内存可以满足，则直接分配即可。<br>设置MEM_SIZE为1&lt;&lt;30，即1GB，显然，上述heap的大小为0x7a000 - 0x59000 &#x3D; 0x21000，远小于MEM_SIZE。<br>重新编译并执行</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&gt; gcc main.c -g -o main</span><br><span class="line">rda@pa ~/Templates&gt; ./main</span><br><span class="line">I am 154154</span><br><span class="line">address: 0x7fffb7d7d010 0x555555559ac0</span><br></pre></td></tr></table></figure>
+<p>使用diff查看三个文件的差异</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&gt; diff before alloc</span><br><span class="line">7c7</span><br><span class="line">&lt; 7ffff7d7e000-7ffff7d81000 rw-p 00000000 00:00 0 </span><br><span class="line">---</span><br><span class="line">&gt; 7fffb7d7d000-7ffff7d81000 rw-p 00000000 00:00 0 </span><br><span class="line">&gt; diff alloc free</span><br><span class="line">7c7</span><br><span class="line">&lt; 7fffb7d7d000-7ffff7d81000 rw-p 00000000 00:00 0 </span><br><span class="line">---</span><br><span class="line">&gt; 7ffff7d7e000-7ffff7d81000 rw-p 00000000 00:00 0 </span><br><span class="line">&gt; diff before free </span><br></pre></td></tr></table></figure>
+<p>可见，在执行malloc之前和执行free后的文件内容是相同的。而执行malloc后，内存空间的差异仅有一处：有一块内存区域的从7ffff7d7e000-7ffff7d81000变为了7fffb7d7d000-7ffff7d81000。即起始处从0x7ffff7d7e000变味了0x7fffb7d7d000，p（大内存）的地址为0x7fffb7d7d010，恰好在该内存区域的起始处偏移0x10的位置，而q（小内存）的地址为0x555555559ac0，仍位于heap中。<br>执行strace跟踪mmap和munmap的调用情况</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">&gt; strace -e mmap ./main</span><br><span class="line">mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7ffff7fbb000</span><br><span class="line">mmap(NULL, 71183, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7ffff7fa9000</span><br><span class="line">mmap(NULL, 2260560, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7ffff7d81000</span><br><span class="line">mmap(0x7ffff7da9000, 1658880, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x28000) = 0x7ffff7da9000</span><br><span class="line">mmap(0x7ffff7f3e000, 360448, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1bd000) = 0x7ffff7f3e000</span><br><span class="line">mmap(0x7ffff7f96000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x214000) = 0x7ffff7f96000</span><br><span class="line">mmap(0x7ffff7f9c000, 52816, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7ffff7f9c000</span><br><span class="line">mmap(NULL, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7ffff7d7e000</span><br><span class="line">I am 154333</span><br><span class="line"></span><br><span class="line">mmap(NULL, 1073745920, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fffb7d7d000</span><br><span class="line">address: 0x7fffb7d7d010 0x555555559ac0</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">+++ exited with 0 +++</span><br><span class="line">&gt; strace -e munmap ./main</span><br><span class="line">munmap(0x7ffff7fa9000, 71183)           = 0</span><br><span class="line">I am 154371</span><br><span class="line"></span><br><span class="line">address: 0x7fffb7d7d010 0x555555559ac0</span><br><span class="line"></span><br><span class="line">munmap(0x7fffb7d7d000, 1073745920)      = 0</span><br><span class="line"></span><br><span class="line">+++ exited with 0 +++</span><br></pre></td></tr></table></figure>
+<p>可见，在malloc申请大内存后执行了mmap，返回的地址为 0x7fffb7d7d000，而free后，调用了munmap(0x7fffb7d7d000, 1073745920)</p>
+<h2 id="summary"><a href="#summary" class="headerlink" title="summary"></a>summary</h2><p>malloc自身维护了一块地址较低的内存，对于小块的内存请求，malloc从自身管理的空闲内存块中分配；对于大块内存，通过调用mmap和munmap分配和释放。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://neutron-l.github.io/2023/02/05/malloc/" data-id="cldr9mfnl000014u371rif918" data-title="malloc" class="article-share-link">Share</a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/C/" rel="tag">C</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2023/02/05/git_reset_checkout/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">reset与checkout</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C++</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cache/" rel="tag">cache</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/language/" rel="tag">language</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/02/05/malloc/">malloc</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/05/git_reset_checkout/">reset与checkout</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/03/mesi/">mesi与伪共享</a>
+          </li>
+        
+          <li>
+            <a href="/2022/11/19/associated_container/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2022/11/19/iterator/">(no title)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Computer-System/">Computer System</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Data-Structure/">Data Structure</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Tool/">Tool</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/dpdk/">dpdk</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/language/">language</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">February 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">November 2022</a></li></ul>
+    </div>
+  </div>
+
+  
+</aside>
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2023 By Autoload<br>
+      Driven - <a href="https://hexo.io/" target="_blank">Hexo</a>|Theme - <a href="https://github.com/autoload/hexo-theme-auto" target="_blank">Auto</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+  </div>
+</body>
+</html>
