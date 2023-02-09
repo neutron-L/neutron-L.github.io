@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>smart pointer | Keep Love</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Keep Love</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/categories">Categories</a>
+        
+          <a class="main-nav-link" href="/tags">Tags</a>
+        
+          <a class="main-nav-link" href="/about">About</a>
+        
+      </nav>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-smart_pointer" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/02/09/smart_pointer/" class="article-date">
+  <time class="dt-published" datetime="2023-02-09T03:13:33.971Z" itemprop="datePublished">2023-02-09</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/language/">language</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      smart pointer
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>标准库提供了<strong>智能指针</strong>类型来更好地管理动态对象，其行为类似常规指针，但是会负责释放所指向的对象。其中，shared_ptr允许多个指针指向同一对象；unique_ptr则“独占”所指向的对象；weak_ptr是一种弱引用，指向shared_ptr所管理的对象。</p>
+<h2 id="shared-ptr"><a href="#shared-ptr" class="headerlink" title="shared_ptr"></a>shared_ptr</h2><p>如果不初始化一个智能指针，它默认是一个空指针</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">shared_ptr&lt;<span class="type">int</span>&gt; p;</span><br><span class="line">cout &lt;&lt; (p == <span class="literal">nullptr</span>) &lt;&lt; endl; <span class="comment">// output 1</span></span><br></pre></td></tr></table></figure>
+<p>当进行拷贝或赋值操作时，每个shared_ptr都会记录有多少个其他shared_ptr指向相同的对象。为了说明，定义一个简单的类，使用shared_ptr控制其分配和销毁。当指向一个对象的最后一个shared_ptr被销毁时，shared_ptr类会自动销毁此对象——通过<strong>析构函数</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Obj</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="type">int</span> count&#123;&#125;;</span><br><span class="line">    <span class="built_in">Obj</span>(<span class="type">int</span> c) : <span class="built_in">count</span>(c) &#123;&#125;</span><br><span class="line">    ~<span class="built_in">Obj</span>()</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;call Obj destructor&quot;</span> &lt;&lt; endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>通过赋值，两个shared_ptr共同操作一个对象</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// a simple example</span></span><br><span class="line"><span class="function">shared_ptr&lt;Obj&gt; <span class="title">p</span><span class="params">(<span class="keyword">new</span> Obj(<span class="number">12</span>))</span></span>;</span><br><span class="line">cout &lt;&lt; p.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&#x27; &#x27;</span> &lt;&lt; p-&gt;count &lt;&lt; endl;</span><br><span class="line">shared_ptr&lt;Obj&gt; q = p;</span><br><span class="line">++q-&gt;count;</span><br><span class="line">cout &lt;&lt; q.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&#x27; &#x27;</span> &lt;&lt; q-&gt;count &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
+<p>输出显示为</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&gt; g++ main.cc -g -o main &amp;&amp; ./main</span><br><span class="line">1 12</span><br><span class="line">2 13</span><br><span class="line">call Obj destructor</span><br></pre></td></tr></table></figure>
+<p>包括调用函数时的参数和函数内部的局部变量，也会影响shared_ptr的计数</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">shared_ptr&lt;Obj&gt; <span class="title">p</span><span class="params">(<span class="keyword">new</span> Obj(<span class="number">12</span>))</span></span>;</span><br><span class="line"><span class="built_in">foo</span>(p);</span><br><span class="line">cout &lt;&lt; p.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&#x27; &#x27;</span> &lt;&lt; p-&gt;count &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
+<p>其中，foo的定义为</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">(shared_ptr&lt;Obj&gt; ptr)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    cout &lt;&lt; ptr.<span class="built_in">use_count</span>() &lt;&lt; endl;</span><br><span class="line">    <span class="keyword">auto</span> x = ptr;</span><br><span class="line">    cout &lt;&lt; x.<span class="built_in">use_count</span>() &lt;&lt; endl;</span><br><span class="line">    x-&gt;count++;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&gt; g++ main.cc -g -o main &amp;&amp; ./main</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">1 13</span><br><span class="line">call Obj destructor</span><br></pre></td></tr></table></figure>
+<p>可以使用new返回的指针初始化智能指针。接受指针参数的智能指针构造函数是explicit的，不支持隐式转换。默认情况下，一个用来初始化智能指针的普通指针必须指向动态内存。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">shared_ptr&lt;<span class="type">int</span>&gt; p = <span class="keyword">new</span> <span class="built_in">int</span>(<span class="number">1024</span>); <span class="comment">// error</span></span><br><span class="line"><span class="function">shared_ptr&lt;<span class="type">int</span>&gt; <span class="title">q</span><span class="params">(<span class="keyword">new</span> <span class="type">int</span>(<span class="number">1024</span>))</span></span>;  <span class="comment">// true</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">munmap_chunk(): invalid pointer</span></span><br><span class="line"><span class="comment">fish: Job 1, &#x27;./main&#x27; terminated by signal SIGABRT (Abort)</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="type">int</span> x;</span><br><span class="line"><span class="function">shared_ptr&lt;<span class="type">int</span>&gt; <span class="title">r</span><span class="params">(&amp;x)</span></span>; </span><br></pre></td></tr></table></figure>
+<p>get()可以返回指向智能指针管理的对象的内置指针。注意，不要使用get()返回的内置指针初始化另一个智能指针，或尝试delete它</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">shared_ptr&lt;<span class="type">int</span>&gt; <span class="title">p</span><span class="params">(<span class="keyword">new</span> <span class="type">int</span>(<span class="number">42</span>))</span></span>;</span><br><span class="line"><span class="type">int</span> *q = p.<span class="built_in">get</span>();</span><br><span class="line"></span><br><span class="line">&#123; <span class="comment">// new block</span></span><br><span class="line">    <span class="built_in">shared_ptr</span>&lt;<span class="type">int</span>&gt; (q);</span><br><span class="line">&#125; <span class="comment">// free the object pointed by q</span></span><br><span class="line"><span class="type">int</span> foo = *p; <span class="comment">// undefined behaviro</span></span><br></pre></td></tr></table></figure>
+<p>use_count方法返回shared_ptr的用户个数，unique方法返回是否当前指针是唯一用户</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">shared_ptr&lt;<span class="type">int</span>&gt; <span class="title">p</span><span class="params">(<span class="keyword">new</span> <span class="type">int</span>(<span class="number">42</span>))</span></span>;</span><br><span class="line">cout &lt;&lt; p.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&#x27; &#x27;</span> &lt;&lt; p.<span class="built_in">unique</span>() &lt;&lt; endl; <span class="comment">// 1 1</span></span><br><span class="line">shared_ptr&lt;<span class="type">int</span>&gt; q = p;</span><br><span class="line">cout &lt;&lt; p.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&#x27; &#x27;</span> &lt;&lt; p.<span class="built_in">unique</span>() &lt;&lt; endl; <span class="comment">// 2 0</span></span><br></pre></td></tr></table></figure>
+<p>还可以调用自定义的可调用对象代替delete，通过shared_ptr<T>p(q, d)，p接管q所指向的对象的所有权，调用d替代默认的delete。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">my_delete</span><span class="params">(Obj * po)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;this is my delete function&quot;</span> &lt;&lt; endl;</span><br><span class="line">    <span class="keyword">delete</span> po;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function">shared_ptr&lt;Obj&gt; <span class="title">p</span><span class="params">(<span class="keyword">new</span> Obj(<span class="number">12</span>), my_delete)</span></span>;</span><br><span class="line">    cout &lt;&lt; p.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&#x27; &#x27;</span> &lt;&lt; p-&gt;count &lt;&lt; endl;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出为</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&gt; g++ main.cc -g -o main &amp;&amp; ./main</span><br><span class="line">1 12</span><br><span class="line">this is my delete <span class="keyword">function</span></span><br><span class="line">call Obj destructor</span><br></pre></td></tr></table></figure>
+<h2 id="unique-ptr"><a href="#unique-ptr" class="headerlink" title="unique_ptr"></a>unique_ptr</h2><p>一个unique_ptr拥有它指向的对象，当我们定义一个unique_ptr时，需要将其绑定到一个new返回的指针上。且其不支持拷贝和赋值</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">unique_ptr&lt;<span class="type">double</span>&gt; p1;            <span class="comment">// default nullptr</span></span><br><span class="line">cout &lt;&lt; (p1 == <span class="literal">nullptr</span>) &lt;&lt; endl;  <span class="comment">// 1</span></span><br><span class="line"></span><br><span class="line"><span class="function">unique_ptr&lt;<span class="type">int</span>&gt; <span class="title">p2</span><span class="params">(<span class="keyword">new</span> <span class="type">int</span>(<span class="number">12</span>))</span></span>;</span><br><span class="line"><span class="function">unique_ptr&lt;<span class="type">int</span>&gt; <span class="title">p3</span><span class="params">(p2)</span></span>;   <span class="comment">// error</span></span><br><span class="line">unique_ptr&lt;<span class="type">int</span>&gt; p4;</span><br><span class="line">p4 = p2;                 <span class="comment">// error</span></span><br></pre></td></tr></table></figure>
+<p>可以通过release或reset将指针所有权从一个unique_ptr转移给另一个unique_ptr。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">unique_ptr&lt;Obj&gt; <span class="title">p1</span><span class="params">(<span class="keyword">new</span> Obj(<span class="number">12</span>))</span></span>;       </span><br><span class="line"><span class="function">unique_ptr&lt;Obj&gt; <span class="title">p2</span><span class="params">(p1.release())</span></span>;</span><br><span class="line"><span class="function">unique_ptr&lt;Obj&gt; <span class="title">p3</span><span class="params">(<span class="keyword">new</span> Obj(<span class="number">13</span>))</span></span>;</span><br><span class="line">p2.<span class="built_in">reset</span>(p3.<span class="built_in">release</span>());</span><br></pre></td></tr></table></figure>
+<p>输出为</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&gt; g++ main.cc -g -o main &amp;&amp; ./main</span><br><span class="line">call Obj destructor 12</span><br><span class="line">call Obj destructor 13</span><br></pre></td></tr></table></figure>
+<p>有一种特殊情况，即当要返回的对象将要销毁时，可以执行一种特殊的拷贝。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">unique_ptr&lt;Obj&gt; <span class="title">clone</span><span class="params">(<span class="type">int</span> count)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">unique_ptr</span>&lt;Obj&gt;(<span class="keyword">new</span> <span class="built_in">Obj</span>(count));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> p = <span class="built_in">clone</span>(<span class="number">1</span>);</span><br><span class="line">    cout &lt;&lt; p-&gt;count &lt;&lt;endl;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&gt; g++ main.cc -g -o main &amp;&amp; ./main</span><br><span class="line">1</span><br><span class="line">call Obj destructor 1</span><br></pre></td></tr></table></figure>
+<h2 id="weak-ptr"><a href="#weak-ptr" class="headerlink" title="weak_ptr"></a>weak_ptr</h2><p>weak_ptr是一种不控制所指向对象生存期的智能指针，它指向由一个shared_ptr管理的对象。将一个weak_ptr绑定到一个shared_ptr不会改变shared_ptr的引用计数。一旦最后一个指向对象的shared_ptr被销毁，对象就会被释放，即使有weak_ptr指向它。<br>创建weak_ptr时需要一个shared_ptr初始化。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> p = <span class="built_in">make_shared</span>&lt;Obj&gt;(<span class="number">11</span>);</span><br><span class="line"><span class="function">weak_ptr&lt;Obj&gt; <span class="title">wp</span><span class="params">(p)</span></span>;</span><br><span class="line">cout &lt;&lt; p.<span class="built_in">use_count</span>() &lt;&lt; endl; <span class="comment">// weak_ptr do not change the use count</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">auto</span> np = wp.<span class="built_in">lock</span>())</span><br><span class="line">&#123;</span><br><span class="line">    cout &lt;&lt; np.<span class="built_in">use_count</span>() &lt;&lt; endl;</span><br><span class="line">    ++np-&gt;count;</span><br><span class="line">&#125;</span><br><span class="line">cout &lt;&lt; p-&gt;count &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
+<p>由于weak_ptr指向的对象可能不存在，需要调用lock函数检查weak_ptr指向的对象是否存在，如果存在则返回一个指向共享对象的shared_ptr，因此可以通过该函数使用weak_ptr访问指向的对象。</p>
+<h2 id="implement-shared-ptr-and-weak-ptr"><a href="#implement-shared-ptr-and-weak-ptr" class="headerlink" title="implement shared_ptr and weak_ptr"></a>implement shared_ptr and weak_ptr</h2>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://neutron-l.github.io/2023/02/09/smart_pointer/" data-id="cldx44oax0000u0u3aveg1kez" data-title="smart pointer" class="article-share-link">Share</a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/C/" rel="tag">C++</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2023/02/05/malloc/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">malloc</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C++</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cache/" rel="tag">cache</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/02/09/smart_pointer/">smart pointer</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/05/malloc/">malloc</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/05/git_reset_checkout/">reset与checkout</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/03/mesi/">mesi与伪共享</a>
+          </li>
+        
+          <li>
+            <a href="/2022/11/19/associated_container/">(no title)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Computer-System/">Computer System</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Data-Structure/">Data Structure</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Tool/">Tool</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/dpdk/">dpdk</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/language/">language</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">February 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">November 2022</a></li></ul>
+    </div>
+  </div>
+
+  
+</aside>
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2023 By Autoload<br>
+      Driven - <a href="https://hexo.io/" target="_blank">Hexo</a>|Theme - <a href="https://github.com/autoload/hexo-theme-auto" target="_blank">Auto</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+  </div>
+</body>
+</html>

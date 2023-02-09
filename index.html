@@ -47,6 +47,88 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-smart_pointer" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/02/09/smart_pointer/" class="article-date">
+  <time class="dt-published" datetime="2023-02-09T03:13:33.971Z" itemprop="datePublished">2023-02-09</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/language/">language</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2023/02/09/smart_pointer/">smart pointer</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>标准库提供了<strong>智能指针</strong>类型来更好地管理动态对象，其行为类似常规指针，但是会负责释放所指向的对象。其中，shared_ptr允许多个指针指向同一对象；unique_ptr则“独占”所指向的对象；weak_ptr是一种弱引用，指向shared_ptr所管理的对象。</p>
+<h2 id="shared-ptr"><a href="#shared-ptr" class="headerlink" title="shared_ptr"></a>shared_ptr</h2><p>如果不初始化一个智能指针，它默认是一个空指针</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">shared_ptr&lt;<span class="type">int</span>&gt; p;</span><br><span class="line">cout &lt;&lt; (p == <span class="literal">nullptr</span>) &lt;&lt; endl; <span class="comment">// output 1</span></span><br></pre></td></tr></table></figure>
+<p>当进行拷贝或赋值操作时，每个shared_ptr都会记录有多少个其他shared_ptr指向相同的对象。为了说明，定义一个简单的类，使用shared_ptr控制其分配和销毁。当指向一个对象的最后一个shared_ptr被销毁时，shared_ptr类会自动销毁此对象——通过<strong>析构函数</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Obj</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="type">int</span> count&#123;&#125;;</span><br><span class="line">    <span class="built_in">Obj</span>(<span class="type">int</span> c) : <span class="built_in">count</span>(c) &#123;&#125;</span><br><span class="line">    ~<span class="built_in">Obj</span>()</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;call Obj destructor&quot;</span> &lt;&lt; endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>通过赋值，两个shared_ptr共同操作一个对象</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// a simple example</span></span><br><span class="line"><span class="function">shared_ptr&lt;Obj&gt; <span class="title">p</span><span class="params">(<span class="keyword">new</span> Obj(<span class="number">12</span>))</span></span>;</span><br><span class="line">cout &lt;&lt; p.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&#x27; &#x27;</span> &lt;&lt; p-&gt;count &lt;&lt; endl;</span><br><span class="line">shared_ptr&lt;Obj&gt; q = p;</span><br><span class="line">++q-&gt;count;</span><br><span class="line">cout &lt;&lt; q.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&#x27; &#x27;</span> &lt;&lt; q-&gt;count &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
+<p>输出显示为</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&gt; g++ main.cc -g -o main &amp;&amp; ./main</span><br><span class="line">1 12</span><br><span class="line">2 13</span><br><span class="line">call Obj destructor</span><br></pre></td></tr></table></figure>
+<p>包括调用函数时的参数和函数内部的局部变量，也会影响shared_ptr的计数</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">shared_ptr&lt;Obj&gt; <span class="title">p</span><span class="params">(<span class="keyword">new</span> Obj(<span class="number">12</span>))</span></span>;</span><br><span class="line"><span class="built_in">foo</span>(p);</span><br><span class="line">cout &lt;&lt; p.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&#x27; &#x27;</span> &lt;&lt; p-&gt;count &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
+<p>其中，foo的定义为</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">(shared_ptr&lt;Obj&gt; ptr)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    cout &lt;&lt; ptr.<span class="built_in">use_count</span>() &lt;&lt; endl;</span><br><span class="line">    <span class="keyword">auto</span> x = ptr;</span><br><span class="line">    cout &lt;&lt; x.<span class="built_in">use_count</span>() &lt;&lt; endl;</span><br><span class="line">    x-&gt;count++;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&gt; g++ main.cc -g -o main &amp;&amp; ./main</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">1 13</span><br><span class="line">call Obj destructor</span><br></pre></td></tr></table></figure>
+<p>可以使用new返回的指针初始化智能指针。接受指针参数的智能指针构造函数是explicit的，不支持隐式转换。默认情况下，一个用来初始化智能指针的普通指针必须指向动态内存。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">shared_ptr&lt;<span class="type">int</span>&gt; p = <span class="keyword">new</span> <span class="built_in">int</span>(<span class="number">1024</span>); <span class="comment">// error</span></span><br><span class="line"><span class="function">shared_ptr&lt;<span class="type">int</span>&gt; <span class="title">q</span><span class="params">(<span class="keyword">new</span> <span class="type">int</span>(<span class="number">1024</span>))</span></span>;  <span class="comment">// true</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">munmap_chunk(): invalid pointer</span></span><br><span class="line"><span class="comment">fish: Job 1, &#x27;./main&#x27; terminated by signal SIGABRT (Abort)</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="type">int</span> x;</span><br><span class="line"><span class="function">shared_ptr&lt;<span class="type">int</span>&gt; <span class="title">r</span><span class="params">(&amp;x)</span></span>; </span><br></pre></td></tr></table></figure>
+<p>get()可以返回指向智能指针管理的对象的内置指针。注意，不要使用get()返回的内置指针初始化另一个智能指针，或尝试delete它</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">shared_ptr&lt;<span class="type">int</span>&gt; <span class="title">p</span><span class="params">(<span class="keyword">new</span> <span class="type">int</span>(<span class="number">42</span>))</span></span>;</span><br><span class="line"><span class="type">int</span> *q = p.<span class="built_in">get</span>();</span><br><span class="line"></span><br><span class="line">&#123; <span class="comment">// new block</span></span><br><span class="line">    <span class="built_in">shared_ptr</span>&lt;<span class="type">int</span>&gt; (q);</span><br><span class="line">&#125; <span class="comment">// free the object pointed by q</span></span><br><span class="line"><span class="type">int</span> foo = *p; <span class="comment">// undefined behaviro</span></span><br></pre></td></tr></table></figure>
+<p>use_count方法返回shared_ptr的用户个数，unique方法返回是否当前指针是唯一用户</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">shared_ptr&lt;<span class="type">int</span>&gt; <span class="title">p</span><span class="params">(<span class="keyword">new</span> <span class="type">int</span>(<span class="number">42</span>))</span></span>;</span><br><span class="line">cout &lt;&lt; p.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&#x27; &#x27;</span> &lt;&lt; p.<span class="built_in">unique</span>() &lt;&lt; endl; <span class="comment">// 1 1</span></span><br><span class="line">shared_ptr&lt;<span class="type">int</span>&gt; q = p;</span><br><span class="line">cout &lt;&lt; p.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&#x27; &#x27;</span> &lt;&lt; p.<span class="built_in">unique</span>() &lt;&lt; endl; <span class="comment">// 2 0</span></span><br></pre></td></tr></table></figure>
+<p>还可以调用自定义的可调用对象代替delete，通过shared_ptr<T>p(q, d)，p接管q所指向的对象的所有权，调用d替代默认的delete。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">my_delete</span><span class="params">(Obj * po)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;this is my delete function&quot;</span> &lt;&lt; endl;</span><br><span class="line">    <span class="keyword">delete</span> po;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function">shared_ptr&lt;Obj&gt; <span class="title">p</span><span class="params">(<span class="keyword">new</span> Obj(<span class="number">12</span>), my_delete)</span></span>;</span><br><span class="line">    cout &lt;&lt; p.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&#x27; &#x27;</span> &lt;&lt; p-&gt;count &lt;&lt; endl;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出为</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&gt; g++ main.cc -g -o main &amp;&amp; ./main</span><br><span class="line">1 12</span><br><span class="line">this is my delete <span class="keyword">function</span></span><br><span class="line">call Obj destructor</span><br></pre></td></tr></table></figure>
+<h2 id="unique-ptr"><a href="#unique-ptr" class="headerlink" title="unique_ptr"></a>unique_ptr</h2><p>一个unique_ptr拥有它指向的对象，当我们定义一个unique_ptr时，需要将其绑定到一个new返回的指针上。且其不支持拷贝和赋值</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">unique_ptr&lt;<span class="type">double</span>&gt; p1;            <span class="comment">// default nullptr</span></span><br><span class="line">cout &lt;&lt; (p1 == <span class="literal">nullptr</span>) &lt;&lt; endl;  <span class="comment">// 1</span></span><br><span class="line"></span><br><span class="line"><span class="function">unique_ptr&lt;<span class="type">int</span>&gt; <span class="title">p2</span><span class="params">(<span class="keyword">new</span> <span class="type">int</span>(<span class="number">12</span>))</span></span>;</span><br><span class="line"><span class="function">unique_ptr&lt;<span class="type">int</span>&gt; <span class="title">p3</span><span class="params">(p2)</span></span>;   <span class="comment">// error</span></span><br><span class="line">unique_ptr&lt;<span class="type">int</span>&gt; p4;</span><br><span class="line">p4 = p2;                 <span class="comment">// error</span></span><br></pre></td></tr></table></figure>
+<p>可以通过release或reset将指针所有权从一个unique_ptr转移给另一个unique_ptr。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">unique_ptr&lt;Obj&gt; <span class="title">p1</span><span class="params">(<span class="keyword">new</span> Obj(<span class="number">12</span>))</span></span>;       </span><br><span class="line"><span class="function">unique_ptr&lt;Obj&gt; <span class="title">p2</span><span class="params">(p1.release())</span></span>;</span><br><span class="line"><span class="function">unique_ptr&lt;Obj&gt; <span class="title">p3</span><span class="params">(<span class="keyword">new</span> Obj(<span class="number">13</span>))</span></span>;</span><br><span class="line">p2.<span class="built_in">reset</span>(p3.<span class="built_in">release</span>());</span><br></pre></td></tr></table></figure>
+<p>输出为</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&gt; g++ main.cc -g -o main &amp;&amp; ./main</span><br><span class="line">call Obj destructor 12</span><br><span class="line">call Obj destructor 13</span><br></pre></td></tr></table></figure>
+<p>有一种特殊情况，即当要返回的对象将要销毁时，可以执行一种特殊的拷贝。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">unique_ptr&lt;Obj&gt; <span class="title">clone</span><span class="params">(<span class="type">int</span> count)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">unique_ptr</span>&lt;Obj&gt;(<span class="keyword">new</span> <span class="built_in">Obj</span>(count));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> p = <span class="built_in">clone</span>(<span class="number">1</span>);</span><br><span class="line">    cout &lt;&lt; p-&gt;count &lt;&lt;endl;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&gt; g++ main.cc -g -o main &amp;&amp; ./main</span><br><span class="line">1</span><br><span class="line">call Obj destructor 1</span><br></pre></td></tr></table></figure>
+<h2 id="weak-ptr"><a href="#weak-ptr" class="headerlink" title="weak_ptr"></a>weak_ptr</h2><p>weak_ptr是一种不控制所指向对象生存期的智能指针，它指向由一个shared_ptr管理的对象。将一个weak_ptr绑定到一个shared_ptr不会改变shared_ptr的引用计数。一旦最后一个指向对象的shared_ptr被销毁，对象就会被释放，即使有weak_ptr指向它。<br>创建weak_ptr时需要一个shared_ptr初始化。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> p = <span class="built_in">make_shared</span>&lt;Obj&gt;(<span class="number">11</span>);</span><br><span class="line"><span class="function">weak_ptr&lt;Obj&gt; <span class="title">wp</span><span class="params">(p)</span></span>;</span><br><span class="line">cout &lt;&lt; p.<span class="built_in">use_count</span>() &lt;&lt; endl; <span class="comment">// weak_ptr do not change the use count</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">auto</span> np = wp.<span class="built_in">lock</span>())</span><br><span class="line">&#123;</span><br><span class="line">    cout &lt;&lt; np.<span class="built_in">use_count</span>() &lt;&lt; endl;</span><br><span class="line">    ++np-&gt;count;</span><br><span class="line">&#125;</span><br><span class="line">cout &lt;&lt; p-&gt;count &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
+<p>由于weak_ptr指向的对象可能不存在，需要调用lock函数检查weak_ptr指向的对象是否存在，如果存在则返回一个指向共享对象的shared_ptr，因此可以通过该函数使用weak_ptr访问指向的对象。</p>
+<h2 id="implement-shared-ptr-and-weak-ptr"><a href="#implement-shared-ptr-and-weak-ptr" class="headerlink" title="implement shared_ptr and weak_ptr"></a>implement shared_ptr and weak_ptr</h2>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://neutron-l.github.io/2023/02/09/smart_pointer/" data-id="cldx44oax0000u0u3aveg1kez" data-title="smart pointer" class="article-share-link">Share</a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/C/" rel="tag">C++</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-malloc" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/2023/02/05/malloc/" class="article-date">
@@ -523,9 +605,23 @@
   <time class="dt-published" datetime="2022-11-19T03:01:43.079Z" itemprop="datePublished">2022-11-19</time>
 </a>
     
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/language/">language</a>
+  </div>
+
   </div>
   <div class="article-inner">
     
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2022/11/19/iterator/">Iterator</a>
+    </h1>
+  
+
+      </header>
     
     <div class="e-content article-entry" itemprop="articleBody">
       
@@ -533,10 +629,12 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://neutron-l.github.io/2022/11/19/iterator/" data-id="claniqakk000is4u36ojd6zc6" data-title="" class="article-share-link">Share</a>
+      <a data-url="https://neutron-l.github.io/2022/11/19/iterator/" data-id="claniqakk000is4u36ojd6zc6" data-title="Iterator" class="article-share-link">Share</a>
       
       
       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/C/" rel="tag">C++</a></li></ul>
+
     </footer>
   </div>
   
@@ -551,20 +649,55 @@
   <time class="dt-published" datetime="2022-11-19T03:00:54.570Z" itemprop="datePublished">2022-11-19</time>
 </a>
     
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/language/">language</a>
+  </div>
+
   </div>
   <div class="article-inner">
     
     
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2022/11/19/type_conversion/">类型转换</a>
+    </h1>
+  
+
+      </header>
+    
     <div class="e-content article-entry" itemprop="articleBody">
       
-        
+        <p>有时候我们需要在表达式中显示地将对象强制转换为另一种类型参与运算，称作**强制类型转换(cast)<strong>。一个命名的强制类型的形式为</strong>cast-name<type>(expression)**，其中type是转换的目标而expression是要转换的值。  </p>
+<h2 id="static-cast"><a href="#static-cast" class="headerlink" title="static_cast"></a>static_cast</h2><p>任何具有明确定义的类型转换，且不包含底层const，都可以使用static_cast。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// convert int to double</span></span><br><span class="line"><span class="type">int</span> a = <span class="number">9</span>;</span><br><span class="line"><span class="type">int</span> b = <span class="number">8</span>;</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; a / b &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; static_cast&lt;<span class="type">double</span>&gt;(a) / b &lt;&lt;<span class="built_in">endl</span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// 具有底层const，无法使用static_cast</span></span><br><span class="line"><span class="type">const</span> <span class="type">char</span> * p = <span class="string">&quot;helloworld&quot;</span>;</span><br><span class="line"><span class="type">char</span> * q = static_cast&lt;<span class="type">char</span> *&gt;(p);  <span class="comment">// compile error</span></span><br><span class="line">*q = <span class="string">&#x27;H&#x27;</span>;</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; q &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 顶层const可以使用static_cast</span></span><br><span class="line"><span class="type">char</span> * <span class="type">const</span> x = <span class="string">&quot;aloha&quot;</span>;</span><br><span class="line"><span class="type">char</span> * y = static_cast&lt;<span class="type">char</span> *&gt;(x);  <span class="comment">// 去掉顶层const</span></span><br><span class="line">y = <span class="string">&quot;hello&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; x &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; y &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"><span class="comment">// 转换为string</span></span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; static_cast&lt;<span class="built_in">string</span>&gt;(x) &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; static_cast&lt;<span class="built_in">string</span>&gt;(y) &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; static_cast&lt;<span class="type">const</span> <span class="built_in">string</span>&gt;(y) &lt;&lt; <span class="built_in">endl</span>;  <span class="comment">// 添加顶层const</span></span><br></pre></td></tr></table></figure>
+<h2 id="const-cast"><a href="#const-cast" class="headerlink" title="const_cast"></a>const_cast</h2><p>const_cast只能改变运算对象的底层const。对于将常量对象转换为非常量对象，称为<strong>去掉const性质</strong>。如果对象本身不是常量，则获得写权限是合法的行为，反之对其进行写操作会产生未定义的后果。<br>const_cast与static_cast对比</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">char</span> * sp;</span><br><span class="line"><span class="type">char</span> *q = static_cast&lt;<span class="type">char</span> *&gt;(sp); <span class="comment">// compile error</span></span><br><span class="line">static_cast&lt;<span class="built_in">string</span>&gt;(sp); <span class="comment">// true.字符串字面值转换为string类型</span></span><br><span class="line">const_cast&lt;<span class="built_in">string</span>&gt;(sp); <span class="comment">// compile error.只能改变常量属性</span></span><br><span class="line"><span class="type">char</span> * l = const_cast&lt;<span class="type">char</span>*&gt; (sp); <span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+<p>使用const_cast获得常量的写操作权限</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">write_const</span><span class="params">(<span class="type">const</span> <span class="type">char</span> * cp)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">char</span> * q = const_cast&lt;<span class="type">char</span>*&gt; (cp); </span><br><span class="line">    *q = <span class="string">&#x27;H&#x27;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该函数通过将指向常量的指针参数，去掉其底层const，尝试进行写操纵。<br>当cp指向真正的常量时，如下main函数</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span> * sp = <span class="string">&quot;helloworld&quot;</span>; <span class="comment">// sp指向字符串常量</span></span><br><span class="line">    write_const(sp);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译通过，运行。触发segment fault:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt; g++ main.cc -g -o main &amp;&amp; ./main </span><br><span class="line">fish: Job 1, <span class="string">&#x27;./main&#x27;</span> terminated by signal SIGSEGV (Address boundary error)</span><br></pre></td></tr></table></figure>
+<p>若sp指向的是非常量</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">char</span> arr[] = <span class="string">&quot;helloworld&quot;</span>;</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span> * sp = arr; <span class="comment">// sp指向字符串常量</span></span><br><span class="line">    write_const(sp);</span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; sp &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译通过，运行，写入成功:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt; g++ main.cc -g -o main &amp;&amp; ./main </span><br><span class="line">Helloworld</span><br></pre></td></tr></table></figure>
+<h2 id="reinterpret-cast"><a href="#reinterpret-cast" class="headerlink" title="reinterpret_cast"></a>reinterpret_cast</h2><p>reinterpret_cast通常为运算对象的位模式提供较低层次上的重新解释。  </p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 将一段存储数字的内存的地址转换为字符串的地址，并输出</span></span><br><span class="line"><span class="type">int</span> arri[] = &#123;<span class="number">0x6c6c6568</span>, <span class="number">0x726f776f</span>, <span class="number">0x646c</span>&#125;;</span><br><span class="line"><span class="type">char</span> * p = reinterpret_cast&lt;<span class="type">char</span> *&gt;(arri);</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; p &lt;&lt; <span class="built_in">endl</span>;</span><br></pre></td></tr></table></figure>
+<p>运行结果为</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt; g++ main.cc -g -o main &amp;&amp; ./main</span><br><span class="line">helloworld</span><br></pre></td></tr></table></figure>
+<h2 id="dynamic-cast"><a href="#dynamic-cast" class="headerlink" title="dynamic_cast"></a>dynamic_cast</h2>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://neutron-l.github.io/2022/11/19/type_conversion/" data-id="claniqakp000ws4u3h5ut65h7" data-title="" class="article-share-link">Share</a>
+      <a data-url="https://neutron-l.github.io/2022/11/19/type_conversion/" data-id="claniqakp000ws4u3h5ut65h7" data-title="类型转换" class="article-share-link">Share</a>
       
       
       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/C/" rel="tag">C++</a></li></ul>
+
     </footer>
   </div>
   
@@ -847,84 +980,6 @@
 
 
   
-    <article id="post-auto_decltype" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2022/11/14/auto_decltype/" class="article-date">
-  <time class="dt-published" datetime="2022-11-14T02:16:41.756Z" itemprop="datePublished">2022-11-14</time>
-</a>
-    
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/language/">language</a>
-  </div>
-
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2022/11/14/auto_decltype/">auto decltype</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <p>有时候程序中会出现难以拼写的复杂类型，或者是有时候程序不知道所需要的变量的类型是什么，C++提供了类型别名、auto类型说明符和decltype类型指示符以处理相应的情况。</p>
-<h2 id="类型别名"><a href="#类型别名" class="headerlink" title="类型别名"></a>类型别名</h2><p>const对象一旦创建后，其值就无法修改，因此必须初始化。初始值可以是任何复杂的表达式，包括常量和变量。  </p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> i = <span class="number">10</span>; <span class="comment">// i是一个已初始化的变量</span></span><br><span class="line"><span class="type">int</span> j; <span class="comment">// j是一个未初始化的变量</span></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> k = <span class="number">9</span>; <span class="comment">// k是一个常量，必须初始化</span></span><br><span class="line">cin &gt;&gt; j;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> a = i;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> b = j;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> c = k;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;i = &quot;</span> &lt;&lt; i &lt;&lt;endl;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;j = &quot;</span> &lt;&lt; j &lt;&lt;endl;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;k = &quot;</span> &lt;&lt; k &lt;&lt;endl;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;a = &quot;</span> &lt;&lt; a &lt;&lt; endl;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;b = &quot;</span> &lt;&lt; b &lt;&lt; endl;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;c = &quot;</span> &lt;&lt; c &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
-<p>输出结果如下：  </p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">6</span><br><span class="line">i = 10</span><br><span class="line">j = 6</span><br><span class="line">k = 9</span><br><span class="line">a = 10</span><br><span class="line">b = 6</span><br><span class="line">c = 9</span><br><span class="line">```  </span><br><span class="line">当用i、j和k去初始化a、b和c时，根本无须在意是不是用常量初始化，常量特征仅仅在执行改变该对象的操作时才会发生作用。任何试图改变const对象的内容的行为都是非法的。</span><br><span class="line">```c++</span><br><span class="line">    a = b; // 错误，不能修改常量的值</span><br><span class="line">    const int d; // 错误，常量必须初始化</span><br></pre></td></tr></table></figure>
-
-<h2 id="auto类型说明符"><a href="#auto类型说明符" class="headerlink" title="auto类型说明符"></a>auto类型说明符</h2><p>有时候需要把一个较为复杂的表达式或者类型难以拼写的变量赋值给一个变量，C++11引入了auto类型说明符，可以让编译器分析表达式的值所属的类型，来推算变量的类型，显然，auto定义的变量必须有初始值。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> item = val1 + val2; <span class="comment">// item初始化为val1和val2相加的结果，根据结果可以推断出item的类型</span></span><br></pre></td></tr></table></figure>
-<p>使用auto也能在一条语句中声明多个变量，但语句中所有变量的初始基本数据类型必须一样，<strong>即使是可以相互转换的类型也不行</strong>。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> i = <span class="number">0</span>, *p = &amp;i;     <span class="comment">// 正确，i是int类型，p是指向int的指针</span></span><br><span class="line"><span class="keyword">auto</span> sz = <span class="number">0</span>, pi = <span class="number">3.14</span>;  <span class="comment">// 错误，sz和pi的类型不一致</span></span><br><span class="line"><span class="type">float</span> x = <span class="number">2.1</span>;</span><br><span class="line"><span class="keyword">auto</span> a = x, b = <span class="number">3.14</span>;    <span class="comment">// 错误，x是float类型，而b是double类型</span></span><br><span class="line">Base1 base1;             <span class="comment">// Base1是TopLevel的父类</span></span><br><span class="line">TopLevel t;</span><br><span class="line">Base1 * pb =&amp;t;          <span class="comment">// 正确，基类类型的指针可以指向子类类型对象</span></span><br><span class="line"><span class="keyword">auto</span> u = base1, v = t;   <span class="comment">// 错误，u和v类型不一致</span></span><br></pre></td></tr></table></figure>
-<h3 id="复合类型、常量和auto"><a href="#复合类型、常量和auto" class="headerlink" title="复合类型、常量和auto"></a>复合类型、常量和auto</h3><p>编译器推断出来的auto类型有时和初始值的类型并不完全一样，编译器会适当改变结果类型使其更加符合初始化规则。<br>使用引用其实是使用引用的对象，因此引用作为初始值时，参与初始化的是引用对象的值，编译器以此为auto的类型。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> i = <span class="number">0</span>, &amp;r = i;</span><br><span class="line"><span class="keyword">auto</span> a = r; <span class="comment">// a是int类型</span></span><br></pre></td></tr></table></figure>
-<p>其次，auto一般会忽略掉顶层const，底层const则会保留。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">int</span> ci = i, &amp;cr = ci; <span class="comment">// ci是const int类型，cr是const int&amp;类型</span></span><br><span class="line"><span class="keyword">auto</span> b = ci;           <span class="comment">// b为int，忽略了ci的顶层const</span></span><br><span class="line"><span class="keyword">auto</span> c = cr;           <span class="comment">// c为int，cr是ci的别名，忽略了ci的顶层const</span></span><br><span class="line"><span class="keyword">auto</span> d = &amp;i;          <span class="comment">// d为int*</span></span><br><span class="line"><span class="keyword">auto</span> e = &amp;ci;    <span class="comment">// e为const int*，对常量对象取地址是一种底层const</span></span><br></pre></td></tr></table></figure>
-<p>如果希望推断出的auto类型是一个顶层const，需要明确指出（如上面例子中的cr）：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="keyword">auto</span> f = ci;  <span class="comment">// ci的推演类型是int，f是const int</span></span><br></pre></td></tr></table></figure>
-<p>可以将引用的类型设为auto，初始值中的顶层const仍然保留。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> &amp; g = ci; <span class="comment">// g是一个整型常量的引用</span></span><br><span class="line"><span class="keyword">auto</span> &amp;h = <span class="number">42</span>;             <span class="comment">// 错误，非常量引用无法绑定到字面值</span></span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span> &amp;j = <span class="number">42</span>;       <span class="comment">// 常量引用可以绑定到字面值</span></span><br></pre></td></tr></table></figure>
-<p>一条语句中定义多个变量时，符合&amp;和*只从属于某个声明符，而非数据类型的一部分。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> k = ci, &amp;l = i;        <span class="comment">// k是int，l是int &amp;</span></span><br><span class="line"><span class="keyword">auto</span> &amp;m = ci, *p = &amp;ci; <span class="comment">// m是const int &amp;，p是const int *</span></span><br><span class="line"><span class="keyword">auto</span> &amp;n = i, *p2 = &amp;cr;    <span class="comment">// 错误，n是int&amp;，p2是const int *</span></span><br></pre></td></tr></table></figure>
-<h3 id="多维数组循环遍历中的auto"><a href="#多维数组循环遍历中的auto" class="headerlink" title="多维数组循环遍历中的auto"></a>多维数组循环遍历中的auto</h3><p>c++11新增了范围for语句，因此可以使用其遍历二维数组：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> ia[][<span class="number">4</span>] = &#123;&#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>&#125;, &#123;<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>,<span class="number">8</span>&#125;&#125;;</span><br><span class="line"><span class="keyword">for</span> (<span class="type">const</span> <span class="keyword">auto</span>&amp; row : ia)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span> c : row)</span><br><span class="line">        cout &lt;&lt; c &lt;&lt; <span class="string">&#x27; &#x27;</span>;</span><br><span class="line">    cout &lt;&lt; endl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>除了最内层的循环外，外层循环的控制变量必须是引用类型，否则auto推断类型会把数组转为指针。</p>
-<h2 id="decltype类型指示符"><a href="#decltype类型指示符" class="headerlink" title="decltype类型指示符"></a>decltype类型指示符</h2><p>有时候希望从一个表达式的类型推断出所需要定义的变量的类型，但又不想用该表达式的值初始化变量。c++11引入了类型说明符<strong>decltype</strong>，<br>它的作用是选择并返回操作数的数据类型。编译器并不计算表达式的值。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">f</span><span class="params">()</span> </span>&#123;    <span class="keyword">return</span> <span class="number">1</span>;&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">g</span><span class="params">()</span> </span>&#123;&#125;</span><br><span class="line"><span class="comment">// ……</span></span><br><span class="line"><span class="keyword">decltype</span>(<span class="built_in">f</span>()) i;</span><br><span class="line"><span class="keyword">decltype</span>(<span class="built_in">f</span>())* pi = &amp;i;</span><br><span class="line">*pi = <span class="number">3</span>;</span><br><span class="line">cout &lt;&lt; i &lt;&lt; endl; <span class="comment">// 3</span></span><br></pre></td></tr></table></figure>
-<p>decltype处理顶层const和引用的方式与auto不同，如果decltype使用的表达式是一个变量，则decltype返回该变量的类型（包括顶层const和引用）。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">int</span> ci = <span class="number">0</span>, &amp;cj = ci;</span><br><span class="line"><span class="keyword">decltype</span>(ci) x=<span class="number">0</span>;  <span class="comment">// const int</span></span><br><span class="line"><span class="keyword">decltype</span>(cj) y = x;  <span class="comment">// const int &amp;</span></span><br><span class="line"><span class="keyword">decltype</span>(cj) z; <span class="comment">// const int &amp;，必须初始化</span></span><br></pre></td></tr></table></figure>
-<p>其次，如果decltype使用的表达式不是一个变量，则返回该表达式结果对应的类型，如果表达式结果可赋值，则得到引用类型。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> i = <span class="number">42</span>, *p = &amp;i, &amp;r=i;</span><br><span class="line"><span class="keyword">decltype</span>(r+<span class="number">0</span>)b; <span class="comment">// int</span></span><br><span class="line"><span class="keyword">decltype</span>(*p) c; <span class="comment">// int &amp;，必须初始化</span></span><br><span class="line"><span class="keyword">decltype</span>(*p+<span class="number">0</span>) d; <span class="comment">// int </span></span><br><span class="line"> <span class="type">int</span> i = <span class="number">9</span>;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> * p = &amp;i;</span><br><span class="line"><span class="keyword">decltype</span>(*p) u= <span class="number">9</span>; <span class="comment">// const int &amp;，必须初始化</span></span><br><span class="line"><span class="keyword">decltype</span>(p) v; <span class="comment">// const int *</span></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> * <span class="type">const</span> q = &amp;i; </span><br><span class="line"><span class="keyword">decltype</span>(q) w= <span class="literal">NULL</span>; <span class="comment">// const int * const</span></span><br></pre></td></tr></table></figure>
-<p>如果表达式的结果是左值类型，则返回一个引用，注意还有不可修改的左值——数组：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> ia[][<span class="number">4</span>] = &#123;&#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>&#125;, &#123;<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>,<span class="number">8</span>&#125;&#125;;</span><br><span class="line"><span class="type">int</span> ib[] = &#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>&#125;;</span><br><span class="line"><span class="keyword">decltype</span>(ia[<span class="number">1</span>]) x= ib; <span class="comment">// x是int(&amp;)[4] ia[1]是一个不可修改的左值</span></span><br><span class="line"><span class="keyword">decltype</span>(ib) y;  <span class="comment">// int[4]</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">decltype</span>(ia[<span class="number">0</span>]) row : ia) <span class="comment">// int (&amp;)[4]</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span> c : row)</span><br><span class="line">        cout &lt;&lt; c &lt;&lt; <span class="string">&#x27; &#x27;</span>;</span><br><span class="line">    cout &lt;&lt; endl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>对于变量，如果加上了括号，则被当作表达式，而变量是可赋值的特殊表达式，因此会返回引用类型。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">decltype</span>(((i))) d; <span class="comment">// int &amp;</span></span><br><span class="line"><span class="keyword">decltype</span>((*p + <span class="number">0</span>)) e; <span class="comment">// int，*p+0是一个临时量无法赋值</span></span><br></pre></td></tr></table></figure>
-<p>另外与auto不同的地方是，当数组作为一个auto变量的初始值时，推断得到的类型是指针，而decltype关键字不会发生上述转换：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> ia[] = &#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>&#125;;</span><br><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">ia2</span><span class="params">(ia)</span></span>; <span class="comment">// ia2 是int*，等同于auto ia2(&amp;ia[0])</span></span><br><span class="line"><span class="keyword">decltype</span>(ia) ia3 = &#123;<span class="number">0</span>,<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;; <span class="comment">// ia3是int[4]</span></span><br><span class="line">ia3[<span class="number">1</span>] = <span class="number">9</span>;</span><br><span class="line"><span class="keyword">return</span> <span class="number">0</span>;</span><br></pre></td></tr></table></figure>
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://neutron-l.github.io/2022/11/14/auto_decltype/" data-id="claniqak80001s4u3c2ik3ytc" data-title="auto decltype" class="article-share-link">Share</a>
-      
-      
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/C/" rel="tag">C++</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
 
 
   <nav id="page-nav">
@@ -951,6 +1006,10 @@
       <ul>
         
           <li>
+            <a href="/2023/02/09/smart_pointer/">smart pointer</a>
+          </li>
+        
+          <li>
             <a href="/2023/02/05/malloc/">malloc</a>
           </li>
         
@@ -964,10 +1023,6 @@
         
           <li>
             <a href="/2022/11/19/associated_container/">(no title)</a>
-          </li>
-        
-          <li>
-            <a href="/2022/11/19/iterator/">(no title)</a>
           </li>
         
       </ul>

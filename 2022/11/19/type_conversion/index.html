@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   
-  <title>Keep Love</title>
+  <title>类型转换 | Keep Love</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   
     <link rel="shortcut icon" href="/favicon.png">
@@ -51,20 +51,55 @@
   <time class="dt-published" datetime="2022-11-19T03:00:54.570Z" itemprop="datePublished">2022-11-19</time>
 </a>
     
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/language/">language</a>
+  </div>
+
   </div>
   <div class="article-inner">
     
     
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      类型转换
+    </h1>
+  
+
+      </header>
+    
     <div class="e-content article-entry" itemprop="articleBody">
       
-        
+        <p>有时候我们需要在表达式中显示地将对象强制转换为另一种类型参与运算，称作**强制类型转换(cast)<strong>。一个命名的强制类型的形式为</strong>cast-name<type>(expression)**，其中type是转换的目标而expression是要转换的值。  </p>
+<h2 id="static-cast"><a href="#static-cast" class="headerlink" title="static_cast"></a>static_cast</h2><p>任何具有明确定义的类型转换，且不包含底层const，都可以使用static_cast。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// convert int to double</span></span><br><span class="line"><span class="type">int</span> a = <span class="number">9</span>;</span><br><span class="line"><span class="type">int</span> b = <span class="number">8</span>;</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; a / b &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; static_cast&lt;<span class="type">double</span>&gt;(a) / b &lt;&lt;<span class="built_in">endl</span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// 具有底层const，无法使用static_cast</span></span><br><span class="line"><span class="type">const</span> <span class="type">char</span> * p = <span class="string">&quot;helloworld&quot;</span>;</span><br><span class="line"><span class="type">char</span> * q = static_cast&lt;<span class="type">char</span> *&gt;(p);  <span class="comment">// compile error</span></span><br><span class="line">*q = <span class="string">&#x27;H&#x27;</span>;</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; q &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 顶层const可以使用static_cast</span></span><br><span class="line"><span class="type">char</span> * <span class="type">const</span> x = <span class="string">&quot;aloha&quot;</span>;</span><br><span class="line"><span class="type">char</span> * y = static_cast&lt;<span class="type">char</span> *&gt;(x);  <span class="comment">// 去掉顶层const</span></span><br><span class="line">y = <span class="string">&quot;hello&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; x &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; y &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"><span class="comment">// 转换为string</span></span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; static_cast&lt;<span class="built_in">string</span>&gt;(x) &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; static_cast&lt;<span class="built_in">string</span>&gt;(y) &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; static_cast&lt;<span class="type">const</span> <span class="built_in">string</span>&gt;(y) &lt;&lt; <span class="built_in">endl</span>;  <span class="comment">// 添加顶层const</span></span><br></pre></td></tr></table></figure>
+<h2 id="const-cast"><a href="#const-cast" class="headerlink" title="const_cast"></a>const_cast</h2><p>const_cast只能改变运算对象的底层const。对于将常量对象转换为非常量对象，称为<strong>去掉const性质</strong>。如果对象本身不是常量，则获得写权限是合法的行为，反之对其进行写操作会产生未定义的后果。<br>const_cast与static_cast对比</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">char</span> * sp;</span><br><span class="line"><span class="type">char</span> *q = static_cast&lt;<span class="type">char</span> *&gt;(sp); <span class="comment">// compile error</span></span><br><span class="line">static_cast&lt;<span class="built_in">string</span>&gt;(sp); <span class="comment">// true.字符串字面值转换为string类型</span></span><br><span class="line">const_cast&lt;<span class="built_in">string</span>&gt;(sp); <span class="comment">// compile error.只能改变常量属性</span></span><br><span class="line"><span class="type">char</span> * l = const_cast&lt;<span class="type">char</span>*&gt; (sp); <span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+<p>使用const_cast获得常量的写操作权限</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">write_const</span><span class="params">(<span class="type">const</span> <span class="type">char</span> * cp)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">char</span> * q = const_cast&lt;<span class="type">char</span>*&gt; (cp); </span><br><span class="line">    *q = <span class="string">&#x27;H&#x27;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该函数通过将指向常量的指针参数，去掉其底层const，尝试进行写操纵。<br>当cp指向真正的常量时，如下main函数</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span> * sp = <span class="string">&quot;helloworld&quot;</span>; <span class="comment">// sp指向字符串常量</span></span><br><span class="line">    write_const(sp);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译通过，运行。触发segment fault:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt; g++ main.cc -g -o main &amp;&amp; ./main </span><br><span class="line">fish: Job 1, <span class="string">&#x27;./main&#x27;</span> terminated by signal SIGSEGV (Address boundary error)</span><br></pre></td></tr></table></figure>
+<p>若sp指向的是非常量</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">char</span> arr[] = <span class="string">&quot;helloworld&quot;</span>;</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span> * sp = arr; <span class="comment">// sp指向字符串常量</span></span><br><span class="line">    write_const(sp);</span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; sp &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译通过，运行，写入成功:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt; g++ main.cc -g -o main &amp;&amp; ./main </span><br><span class="line">Helloworld</span><br></pre></td></tr></table></figure>
+<h2 id="reinterpret-cast"><a href="#reinterpret-cast" class="headerlink" title="reinterpret_cast"></a>reinterpret_cast</h2><p>reinterpret_cast通常为运算对象的位模式提供较低层次上的重新解释。  </p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 将一段存储数字的内存的地址转换为字符串的地址，并输出</span></span><br><span class="line"><span class="type">int</span> arri[] = &#123;<span class="number">0x6c6c6568</span>, <span class="number">0x726f776f</span>, <span class="number">0x646c</span>&#125;;</span><br><span class="line"><span class="type">char</span> * p = reinterpret_cast&lt;<span class="type">char</span> *&gt;(arri);</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; p &lt;&lt; <span class="built_in">endl</span>;</span><br></pre></td></tr></table></figure>
+<p>运行结果为</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt; g++ main.cc -g -o main &amp;&amp; ./main</span><br><span class="line">helloworld</span><br></pre></td></tr></table></figure>
+<h2 id="dynamic-cast"><a href="#dynamic-cast" class="headerlink" title="dynamic_cast"></a>dynamic_cast</h2>
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://neutron-l.github.io/2022/11/19/type_conversion/" data-id="claniqakp000ws4u3h5ut65h7" data-title="" class="article-share-link">Share</a>
+      <a data-url="https://neutron-l.github.io/2022/11/19/type_conversion/" data-id="claniqakp000ws4u3h5ut65h7" data-title="类型转换" class="article-share-link">Share</a>
       
       
       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/C/" rel="tag">C++</a></li></ul>
+
     </footer>
   </div>
   
@@ -75,7 +110,7 @@
       <strong class="article-nav-caption">Newer</strong>
       <div class="article-nav-title">
         
-          (no title)
+          Iterator
         
       </div>
     </a>
@@ -112,6 +147,10 @@
       <ul>
         
           <li>
+            <a href="/2023/02/09/smart_pointer/">smart pointer</a>
+          </li>
+        
+          <li>
             <a href="/2023/02/05/malloc/">malloc</a>
           </li>
         
@@ -125,10 +164,6 @@
         
           <li>
             <a href="/2022/11/19/associated_container/">(no title)</a>
-          </li>
-        
-          <li>
-            <a href="/2022/11/19/iterator/">(no title)</a>
           </li>
         
       </ul>
