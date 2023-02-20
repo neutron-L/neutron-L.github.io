@@ -72,11 +72,11 @@
     <div class="e-content article-entry" itemprop="articleBody">
       
         <p>有时候程序中会出现难以拼写的复杂类型，或者是有时候程序不知道所需要的变量的类型是什么，C++提供了类型别名、auto类型说明符和decltype类型指示符以处理相应的情况。</p>
-<h2 id="类型别名"><a href="#类型别名" class="headerlink" title="类型别名"></a>类型别名</h2><p>const对象一旦创建后，其值就无法修改，因此必须初始化。初始值可以是任何复杂的表达式，包括常量和变量。  </p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> i = <span class="number">10</span>; <span class="comment">// i是一个已初始化的变量</span></span><br><span class="line"><span class="type">int</span> j; <span class="comment">// j是一个未初始化的变量</span></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> k = <span class="number">9</span>; <span class="comment">// k是一个常量，必须初始化</span></span><br><span class="line">cin &gt;&gt; j;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> a = i;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> b = j;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> c = k;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;i = &quot;</span> &lt;&lt; i &lt;&lt;endl;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;j = &quot;</span> &lt;&lt; j &lt;&lt;endl;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;k = &quot;</span> &lt;&lt; k &lt;&lt;endl;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;a = &quot;</span> &lt;&lt; a &lt;&lt; endl;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;b = &quot;</span> &lt;&lt; b &lt;&lt; endl;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;c = &quot;</span> &lt;&lt; c &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
-<p>输出结果如下：  </p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">6</span><br><span class="line">i = 10</span><br><span class="line">j = 6</span><br><span class="line">k = 9</span><br><span class="line">a = 10</span><br><span class="line">b = 6</span><br><span class="line">c = 9</span><br><span class="line">```  </span><br><span class="line">当用i、j和k去初始化a、b和c时，根本无须在意是不是用常量初始化，常量特征仅仅在执行改变该对象的操作时才会发生作用。任何试图改变const对象的内容的行为都是非法的。</span><br><span class="line">```c++</span><br><span class="line">    a = b; // 错误，不能修改常量的值</span><br><span class="line">    const int d; // 错误，常量必须初始化</span><br></pre></td></tr></table></figure>
-
+<h2 id="类型别名"><a href="#类型别名" class="headerlink" title="类型别名"></a>类型别名</h2><p>类型别名（type alias)是一个名字，是某种类型的同义词，它让复杂的类型名字变得简单易用。<br>有两种方法可以用于定义类型别名</p>
+<ul>
+<li>传统方法，使用关键字typedef</li>
+<li>新标准，使用<strong>别名声明</strong>，using<br>类型别名和类型的名字等价。但是如果某个类型别名指代的是复合类型或常量，可能会产生意想不到的结果。<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="type">char</span> *pstring;  </span><br><span class="line"><span class="type">char</span> ps[] = <span class="string">&quot;hello&quot;</span>;</span><br><span class="line"><span class="type">const</span> pstring cstr = ps;  <span class="comment">// cstr是指向char的常量指针</span></span><br><span class="line"><span class="type">const</span> <span class="type">char</span> *p = ps;       <span class="comment">// p是指向常量字符的指针</span></span><br><span class="line">cstr[<span class="number">0</span>] = <span class="string">&#x27;J&#x27;</span>;</span><br><span class="line">cout &lt;&lt; ps &lt;&lt; endl; <span class="comment">// output Jello</span></span><br><span class="line">p[<span class="number">0</span>] = <span class="string">&#x27;K&#x27;</span>;   <span class="comment">// error! cannot change its content</span></span><br></pre></td></tr></table></figure></li>
+</ul>
 <h2 id="auto类型说明符"><a href="#auto类型说明符" class="headerlink" title="auto类型说明符"></a>auto类型说明符</h2><p>有时候需要把一个较为复杂的表达式或者类型难以拼写的变量赋值给一个变量，C++11引入了auto类型说明符，可以让编译器分析表达式的值所属的类型，来推算变量的类型，显然，auto定义的变量必须有初始值。</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> item = val1 + val2; <span class="comment">// item初始化为val1和val2相加的结果，根据结果可以推断出item的类型</span></span><br></pre></td></tr></table></figure>
 <p>使用auto也能在一条语句中声明多个变量，但语句中所有变量的初始基本数据类型必须一样，<strong>即使是可以相互转换的类型也不行</strong>。</p>
@@ -162,6 +162,10 @@
       <ul>
         
           <li>
+            <a href="/2023/02/20/rtti/">RTTI</a>
+          </li>
+        
+          <li>
             <a href="/2023/02/10/multiple_virtual_inheritance/">多重继承与虚继承</a>
           </li>
         
@@ -175,10 +179,6 @@
         
           <li>
             <a href="/2023/02/05/malloc/">malloc</a>
-          </li>
-        
-          <li>
-            <a href="/2023/02/05/git_reset_checkout/">reset与checkout</a>
           </li>
         
       </ul>

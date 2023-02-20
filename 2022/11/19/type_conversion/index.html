@@ -90,7 +90,39 @@
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 将一段存储数字的内存的地址转换为字符串的地址，并输出</span></span><br><span class="line"><span class="type">int</span> arri[] = &#123;<span class="number">0x6c6c6568</span>, <span class="number">0x726f776f</span>, <span class="number">0x646c</span>&#125;;</span><br><span class="line"><span class="type">char</span> * p = reinterpret_cast&lt;<span class="type">char</span> *&gt;(arri);</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; p &lt;&lt; <span class="built_in">endl</span>;</span><br></pre></td></tr></table></figure>
 <p>运行结果为</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt; g++ main.cc -g -o main &amp;&amp; ./main</span><br><span class="line">helloworld</span><br></pre></td></tr></table></figure>
-<h2 id="dynamic-cast"><a href="#dynamic-cast" class="headerlink" title="dynamic_cast"></a>dynamic_cast</h2>
+<h2 id="dynamic-cast"><a href="#dynamic-cast" class="headerlink" title="dynamic_cast"></a>dynamic_cast</h2><p>dynamic_cast运算符，用于将基类指针或引用安全转换为派生类的指针或引用。使用形式如下</p>
+<ul>
+<li><p>dynamic_cast&lt;type *&gt;(e)，e必须是一个有效的指针</p>
+</li>
+<li><p>dynamic_cast&lt;type &amp;&gt;(e)，e必须是一个左值</p>
+</li>
+<li><p>dynamic_cast&lt;type &amp;&amp;&gt;(e)，e不能是左值</p>
+</li>
+</ul>
+<p>其中，type必须是一个类类型，并且通常情况下该类型应该含有虚函数。e的类型必须符合如下三个条件中任一一个：</p>
+<ul>
+<li>e的类型是目标type的公有派生类</li>
+<li>e的类型是目标typpe的公有基类</li>
+<li>e的类型就说目标type的类型</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">base</span>()</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot; \n base constructor \n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">derived</span> : <span class="keyword">public</span> base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">derived</span>()</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot; \n derived constructor \n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"></span><br><span class="line">    base *obj = <span class="keyword">new</span> derived;                     <span class="comment">// case 1: explicitly upcasting</span></span><br><span class="line">    derived *OBJ = <span class="built_in">dynamic_cast</span>&lt;derived *&gt;(obj); <span class="comment">// case 2: error</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>此种情况下，base类没有虚函数，编译器会提示错误信息</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">the operand of a runtime dynamic_cast must have a polymorphic class typeC/C++(698)</span><br></pre></td></tr></table></figure>
+
+<p>任一添加虚函数后，程序通过编译(note: 虚函数必须有定义，不能只声明)。</p>
+<p>对于转换类型是指针和引用，当转换失败时的行为不同：若一条 dynamic_cast语句的转换目标是指针类型，则结果为0；若转换目标是引用类型，则dynamic_cast运算符抛出bad_cast异常。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">base</span>()</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot; \n base constructor \n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">foo</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">derived</span> : <span class="keyword">public</span> base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">derived</span>()</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot; \n derived constructor \n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// case 1: pointer</span></span><br><span class="line">    base *obj = <span class="keyword">new</span> derived;                     <span class="comment">// case 1: explicitly upcasting</span></span><br><span class="line">    derived *OBJ = <span class="built_in">dynamic_cast</span>&lt;derived *&gt;(obj); <span class="comment">// case 2: error</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// case 2: reference</span></span><br><span class="line">    derived d;</span><br><span class="line">    base &amp;rb = d;</span><br><span class="line">    <span class="keyword">try</span></span><br><span class="line">    &#123;</span><br><span class="line">        derived &amp;rd = <span class="built_in">dynamic_cast</span>&lt;derived &amp;&gt;(rb);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">catch</span> (<span class="type">const</span> std::exception &amp;e)</span><br><span class="line">    &#123;</span><br><span class="line">        std::cerr &lt;&lt; e.<span class="built_in">what</span>() &lt;&lt; <span class="string">&#x27;\n&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// case 3: rvalue</span></span><br><span class="line">    <span class="comment">// derived &amp;&amp;rrd = dynamic_cast&lt;derived &amp;&amp;&gt;(base());</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">delete</span> obj;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>上述例子可以运行成功。下面这个例子中的指针和引用转换失败：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// case 1: pointer</span></span><br><span class="line">    base *obj = <span class="keyword">new</span> base;</span><br><span class="line">    derived *OBJ = <span class="built_in">dynamic_cast</span>&lt;derived *&gt;(obj); <span class="comment">// fail: return nullptr</span></span><br><span class="line">    <span class="built_in">assert</span>(OBJ == <span class="literal">nullptr</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// case 2: reference</span></span><br><span class="line">    base b;</span><br><span class="line">    base &amp;rb = b;</span><br><span class="line">    <span class="keyword">try</span></span><br><span class="line">    &#123;</span><br><span class="line">        derived &amp;rd = <span class="built_in">dynamic_cast</span>&lt;derived &amp;&gt;(rb);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">catch</span> (<span class="type">const</span> std::exception &amp;e)</span><br><span class="line">    &#123;</span><br><span class="line">        std::cerr &lt;&lt; e.<span class="built_in">what</span>() &lt;&lt; <span class="string">&#x27;\n&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">delete</span> obj;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出结果如下</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">std::bad_cast</span><br></pre></td></tr></table></figure>
+
+
+
+
       
     </div>
     <footer class="article-footer">
@@ -110,7 +142,7 @@
       <strong class="article-nav-caption">Newer</strong>
       <div class="article-nav-title">
         
-          (no title)
+          移动语义
         
       </div>
     </a>
@@ -147,6 +179,10 @@
       <ul>
         
           <li>
+            <a href="/2023/02/20/rtti/">RTTI</a>
+          </li>
+        
+          <li>
             <a href="/2023/02/10/multiple_virtual_inheritance/">多重继承与虚继承</a>
           </li>
         
@@ -160,10 +196,6 @@
         
           <li>
             <a href="/2023/02/05/malloc/">malloc</a>
-          </li>
-        
-          <li>
-            <a href="/2023/02/05/git_reset_checkout/">reset与checkout</a>
           </li>
         
       </ul>

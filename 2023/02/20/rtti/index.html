@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>RTTI | Keep Love</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Keep Love</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/categories">Categories</a>
+        
+          <a class="main-nav-link" href="/tags">Tags</a>
+        
+          <a class="main-nav-link" href="/about">About</a>
+        
+      </nav>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-rtti" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/02/20/rtti/" class="article-date">
+  <time class="dt-published" datetime="2023-02-20T07:03:44.335Z" itemprop="datePublished">2023-02-20</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/language/">language</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      RTTI
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <hr>
+<p>RTTI，即<strong>运行时类型识别</strong>，由两个运算符实现：</p>
+<ul>
+<li>typeid运算符，返回表达式的类型</li>
+<li>dynamic_cast运算符，将基类指针或引用安全地转换成派生类的指针或引用</li>
+</ul>
+<p>本篇主要阐述typeid运算符</p>
+<h2 id="typeid运算符"><a href="#typeid运算符" class="headerlink" title="typeid运算符"></a>typeid运算符</h2><p>typeid表达式的形式是typeid(e)，其中e可以是任意表达式或类型的名字，操作的结果是一个常量对象的引用，该对象的类型是标准库类型type_info或其公有派生类。  </p>
+<p>typeid运算符的一些特点：</p>
+<ul>
+<li>忽略顶层const</li>
+<li>如果表达式是引用类型，返回其所引用对象的类型</li>
+<li>作用于函数或数组时不会返回指针类型</li>
+<li>当运算对象不属于类类型或者是一个不包含任何虚函数的类时，typeid运算符指示的是运算符对象的静态类型</li>
+<li>当运算对象定义了至少一个虚函数，其类型直到运行时才会求得</li>
+</ul>
+<p>typeid运算符使用示例程序</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// case 1: ignore top-const</span></span><br><span class="line">    <span class="type">const</span> <span class="type">int</span> ci = <span class="number">0</span>;</span><br><span class="line">    <span class="type">int</span> i = <span class="number">0</span>;</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;type of ci: &quot;</span> &lt;&lt; <span class="built_in">typeid</span>(ci).<span class="built_in">name</span>() &lt;&lt; endl;</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;type of i: &quot;</span> &lt;&lt; <span class="built_in">typeid</span>(i).<span class="built_in">name</span>() &lt;&lt; endl;</span><br><span class="line">    <span class="built_in">assert</span>(<span class="built_in">typeid</span>(ci) == <span class="built_in">typeid</span>(i));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// case 2: reference</span></span><br><span class="line">    <span class="type">double</span> d = <span class="number">0.9</span>;</span><br><span class="line">    <span class="type">double</span> &amp;rd = d;</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;type of d: &quot;</span> &lt;&lt; <span class="built_in">typeid</span>(d).<span class="built_in">name</span>() &lt;&lt; endl;</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;type of rd: &quot;</span> &lt;&lt; <span class="built_in">typeid</span>(rd).<span class="built_in">name</span>() &lt;&lt; endl;</span><br><span class="line">    <span class="built_in">assert</span>(<span class="built_in">typeid</span>(d) == <span class="built_in">typeid</span>(rd));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// case 3: function and array</span></span><br><span class="line">    <span class="type">int</span> a[<span class="number">10</span>];</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;type of array int[10]: &quot;</span> &lt;&lt; <span class="built_in">typeid</span>(a).<span class="built_in">name</span>() &lt;&lt; endl;</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;type of fucntion main: &quot;</span> &lt;&lt; <span class="built_in">typeid</span>(main).<span class="built_in">name</span>() &lt;&lt; endl;</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;type of pointer to int: &quot;</span> &lt;&lt; <span class="built_in">typeid</span>(<span class="type">int</span> *).<span class="built_in">name</span>() &lt;&lt; endl;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<p>输出结果为：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">type of ci: i</span><br><span class="line">type of i: i</span><br><span class="line">type of d: d</span><br><span class="line">type of rd: d</span><br><span class="line">type of array int[10]: A10_i</span><br><span class="line">type of fucntion main: FivE</span><br><span class="line">type of pointer to int: Pi</span><br></pre></td></tr></table></figure>
+
+<p>当typeid作用于类类型时，基类和派生类是否具备虚函数会对结果有影响，我们使用如下两个类：base和derived验证。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">base</span>()</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot; \n base constructor \n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// virtual void foo()</span></span><br><span class="line">    <span class="comment">// &#123;</span></span><br><span class="line">    <span class="comment">// &#125;</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">derived</span> : <span class="keyword">public</span> base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">derived</span>()</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot; \n derived constructor \n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>base中的虚函数foo被注释掉了，执行如下main函数</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// case 4: non-contain virtual function class</span></span><br><span class="line">    base *p1 = <span class="keyword">new</span> base;</span><br><span class="line">    base *p2 = <span class="keyword">new</span> derived;</span><br><span class="line">    derived *p3 = <span class="keyword">new</span> derived;</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;type of p1: &quot;</span> &lt;&lt; <span class="built_in">typeid</span>(*p1).<span class="built_in">name</span>() &lt;&lt; endl;</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;type of p2: &quot;</span> &lt;&lt; <span class="built_in">typeid</span>(*p2).<span class="built_in">name</span>() &lt;&lt; endl;</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;type of p3: &quot;</span> &lt;&lt; <span class="built_in">typeid</span>(*p3).<span class="built_in">name</span>() &lt;&lt; endl;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出结果如下（忽略了构造函数和析构函数的输出）</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">type of p1: 4base</span><br><span class="line">type of p2: 4base</span><br><span class="line">type of p3: 7derived</span><br></pre></td></tr></table></figure>
+
+<p>取消对foo函数的注释，再次运行：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">type of p1: 4base</span><br><span class="line">type of p2: 7derived</span><br><span class="line">type of p3: 7derived</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="使用RTTI"><a href="#使用RTTI" class="headerlink" title="使用RTTI"></a>使用RTTI</h2><h2 id="type-info类"><a href="#type-info类" class="headerlink" title="type_info类"></a>type_info类</h2>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://neutron-l.github.io/2023/02/20/rtti/" data-id="cleckgc0m0000j0u3ax21egou" data-title="RTTI" class="article-share-link">Share</a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Cpp/" rel="tag">Cpp</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2023/02/10/multiple_virtual_inheritance/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">多重继承与虚继承</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp/" rel="tag">Cpp</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cache/" rel="tag">cache</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/02/20/rtti/">RTTI</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/10/multiple_virtual_inheritance/">多重继承与虚继承</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/09/copy_control/">copy control</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/09/smart_pointer/">smart pointer</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/05/malloc/">malloc</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Computer-System/">Computer System</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Data-Structure/">Data Structure</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Tool/">Tool</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/dpdk/">dpdk</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/language/">language</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">February 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">November 2022</a></li></ul>
+    </div>
+  </div>
+
+  
+</aside>
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2023 By Autoload<br>
+      Driven - <a href="https://hexo.io/" target="_blank">Hexo</a>|Theme - <a href="https://github.com/autoload/hexo-theme-auto" target="_blank">Auto</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+  </div>
+</body>
+</html>
