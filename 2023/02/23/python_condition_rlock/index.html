@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>python conditon and RLock | Keep Love</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Keep Love</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/categories">Categories</a>
+        
+          <a class="main-nav-link" href="/tags">Tags</a>
+        
+          <a class="main-nav-link" href="/about">About</a>
+        
+      </nav>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-python_condition_rlock" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/02/23/python_condition_rlock/" class="article-date">
+  <time class="dt-published" datetime="2023-02-23T02:53:03.737Z" itemprop="datePublished">2023-02-23</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/language/">language</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      python conditon and RLock
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>本文分析python中条件变量<strong>Conditon</strong>和可重入锁<strong>RLock</strong>的底层实现。完整的源代码部分在**&#x2F;usr&#x2F;lib&#x2F;python3.10&#x2F;threading.py**（Ubuntu 22.04，其他版本的Linux系统应该也类似）。</p>
+<h2 id="Condition"><a href="#Condition" class="headerlink" title="Condition"></a>Condition</h2><p>条件变量是利用线程间共享的全局变量进行同步的一种机制，主要包括两个动作：</p>
+<ul>
+<li>wait：一个线程等待条件变量的条件成立而挂起自身</li>
+<li>notify：一个线程使得条件变量的条件成立而唤醒等待线程</li>
+</ul>
+<p>我们可以理解为：一个线程通过wait等待某个条件成立，在这之前它自动挂起，直到另一个线程通过调用notify通知其条件已成立，接触挂起。python中实现条件变量的是一个<strong>Condition</strong>类，其源码注解中有对该类的说明：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;&quot;&quot;Class that implements a condition variable.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">A condition variable allows one or more threads to wait until they are</span></span><br><span class="line"><span class="string">notified by another thread.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">If the lock argument is given and not None, it must be a Lock or RLock</span></span><br><span class="line"><span class="string">object, and it is used as the underlying lock. Otherwise, a new RLock object</span></span><br><span class="line"><span class="string">is created and used as the underlying lock.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="init"><a href="#init" class="headerlink" title="init"></a>init</h3><p>即初始化一个条件变量，主要功能步骤为：</p>
+<ul>
+<li>接收一个可选参数lock，即用户给定的锁，也可以选择让condition自己准备一个锁，默认情况下condition会选择一个RLock。该锁一般称为<strong>underlying lock</strong>。</li>
+<li>export该锁成员的一些方法</li>
+<li>初始化一个deque类型的成员_waiters，当线程调用该条件变量的wait方法时会使用到。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, lock=<span class="literal">None</span></span>):</span><br><span class="line">    <span class="comment"># 如果没有传入lock，则默认使用一个RLock</span></span><br><span class="line">    <span class="keyword">if</span> lock <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">        lock = RLock()</span><br><span class="line">    self._lock = lock</span><br><span class="line">    <span class="comment"># Export the lock&#x27;s acquire() and release() methods</span></span><br><span class="line">    self.acquire = lock.acquire</span><br><span class="line">    self.release = lock.release</span><br><span class="line">    <span class="comment"># If the lock defines _release_save() and/or _acquire_restore(),</span></span><br><span class="line">    <span class="comment"># these override the default implementations (which just call</span></span><br><span class="line">    <span class="comment"># release() and acquire() on the lock).  Ditto for _is_owned().</span></span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        self._release_save = lock._release_save</span><br><span class="line">    <span class="keyword">except</span> AttributeError:</span><br><span class="line">        <span class="keyword">pass</span></span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        self._acquire_restore = lock._acquire_restore</span><br><span class="line">    <span class="keyword">except</span> AttributeError:</span><br><span class="line">        <span class="keyword">pass</span></span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        self._is_owned = lock._is_owned</span><br><span class="line">    <span class="keyword">except</span> AttributeError:</span><br><span class="line">        <span class="keyword">pass</span></span><br><span class="line">    <span class="comment"># 初始化一个deque</span></span><br><span class="line">    self._waiters = _deque()</span><br></pre></td></tr></table></figure>
+
+<h3 id="wait"><a href="#wait" class="headerlink" title="wait"></a>wait</h3><p>线程通过调用该方法，挂起自身直到被唤醒（其他线程调用notify）或超时（通过自己传入的timeout参数决定）。wait执行的步骤：</p>
+<ul>
+<li>获取一个锁（名为waiter），并acquire</li>
+<li>将其加入到condition的deque中</li>
+<li>尝试重新获取该锁</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">wait</span>(<span class="params">self, timeout=<span class="literal">None</span></span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Wait until notified or until a timeout occurs.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    If the calling thread has not acquired the lock when this method is</span></span><br><span class="line"><span class="string">    called, a RuntimeError is raised.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    This method releases the underlying lock, and then blocks until it is</span></span><br><span class="line"><span class="string">    awakened by a notify() or notify_all() call for the same condition</span></span><br><span class="line"><span class="string">    variable in another thread, or until the optional timeout occurs. Once</span></span><br><span class="line"><span class="string">    awakened or timed out, it re-acquires the lock and returns.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    When the timeout argument is present and not None, it should be a</span></span><br><span class="line"><span class="string">    floating point number specifying a timeout for the operation in seconds</span></span><br><span class="line"><span class="string">    (or fractions thereof).</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    When the underlying lock is an RLock, it is not released using its</span></span><br><span class="line"><span class="string">    release() method, since this may not actually unlock the lock when it</span></span><br><span class="line"><span class="string">    was acquired multiple times recursively. Instead, an internal interface</span></span><br><span class="line"><span class="string">    of the RLock class is used, which really unlocks it even when it has</span></span><br><span class="line"><span class="string">    been recursively acquired several times. Another internal interface is</span></span><br><span class="line"><span class="string">    then used to restore the recursion level when the lock is reacquired.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    <span class="comment"># wait时必须尝试获取到_lock</span></span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> self._is_owned():</span><br><span class="line">        <span class="keyword">raise</span> RuntimeError(<span class="string">&quot;cannot wait on un-acquired lock&quot;</span>)</span><br><span class="line">    waiter = _allocate_lock()</span><br><span class="line">    waiter.acquire()          <span class="comment"># 获取新分配的锁</span></span><br><span class="line">    self._waiters.append(waiter) <span class="comment"># 入队_waiters</span></span><br><span class="line">    saved_state = self._release_save()</span><br><span class="line">    gotit = <span class="literal">False</span></span><br><span class="line">    <span class="keyword">try</span>:    <span class="comment"># restore state no matter what (e.g., KeyboardInterrupt)</span></span><br><span class="line">        <span class="keyword">if</span> timeout <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">            waiter.acquire()</span><br><span class="line">            gotit = <span class="literal">True</span></span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">if</span> timeout &gt; <span class="number">0</span>:</span><br><span class="line">                gotit = waiter.acquire(<span class="literal">True</span>, timeout)</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                gotit = waiter.acquire(<span class="literal">False</span>)</span><br><span class="line">        <span class="keyword">return</span> gotit</span><br><span class="line">    <span class="keyword">finally</span>:</span><br><span class="line">        self._acquire_restore(saved_state)</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> gotit:</span><br><span class="line">            <span class="keyword">try</span>:</span><br><span class="line">                self._waiters.remove(waiter)</span><br><span class="line">            <span class="keyword">except</span> ValueError:</span><br><span class="line">                <span class="keyword">pass</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="notify"><a href="#notify" class="headerlink" title="notify"></a>notify</h3><p>线程通过notify，使得条件变量的条件成立，从而换醒因等待条件变量而挂起的线程。notify方法接受一个可选的参数n，指明唤醒的线程个数，其默认值为1。其执行步骤为：</p>
+<ul>
+<li>当指定的唤醒线程数目n不为0，取_waiters的队首元素（一个锁）waiter，并调用其release方法，唤醒等待该锁的线程，即将waiter入队的线程。并从队列中移除该锁。循环直至n为0</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">notify</span>(<span class="params">self, n=<span class="number">1</span></span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Wake up one or more threads waiting on this condition, if any.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    If the calling thread has not acquired the lock when this method is</span></span><br><span class="line"><span class="string">    called, a RuntimeError is raised.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    This method wakes up at most n of the threads waiting for the condition</span></span><br><span class="line"><span class="string">    variable; it is a no-op if no threads are waiting.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> self._is_owned():</span><br><span class="line">        <span class="keyword">raise</span> RuntimeError(<span class="string">&quot;cannot notify on un-acquired lock&quot;</span>)</span><br><span class="line">    waiters = self._waiters</span><br><span class="line">    <span class="keyword">while</span> waiters <span class="keyword">and</span> n &gt; <span class="number">0</span>:</span><br><span class="line">        waiter = waiters[<span class="number">0</span>]  <span class="comment"># 获取队列首元素并release</span></span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            waiter.release()</span><br><span class="line">        <span class="keyword">except</span> RuntimeError:</span><br><span class="line">            <span class="comment"># gh-92530: The previous call of notify() released the lock,</span></span><br><span class="line">            <span class="comment"># but was interrupted before removing it from the queue.</span></span><br><span class="line">            <span class="comment"># It can happen if a signal handler raises an exception,</span></span><br><span class="line">            <span class="comment"># like CTRL+C which raises KeyboardInterrupt.</span></span><br><span class="line">            <span class="keyword">pass</span></span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            n -= <span class="number">1</span></span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            waiters.remove(waiter)  <span class="comment"># 移除该锁</span></span><br><span class="line">        <span class="keyword">except</span> ValueError:</span><br><span class="line">            <span class="keyword">pass</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>python中的条件变量，通过一个互斥锁_lock以及一个等待队列_waiters，管理线程的wait和notify。每个线程调用wait和notify方法时，需要获取underlying lock，然后才能对_waiters进行操作。对于wait方法，其分配并获取一个锁，放入waiters队列中，并尝试再次获取该锁，从而阻塞；对于notify，其从waiters中出队指定的锁数，并release。</p>
+<h2 id="RLock"><a href="#RLock" class="headerlink" title="RLock"></a>RLock</h2><p>即可重入锁，与一般锁不同的是：一个线程如果尝试获取其已经拥有的锁，则会阻塞造成死锁。而可重入锁可以避免此种情况，需要注意的是，可重入锁需要手动释放锁，且<strong>加锁次数和释放次数要相同</strong>。python中的可重入锁由**_RLock**实现，其源码中的注解如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;&quot;&quot;This class implements reentrant lock objects.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">A reentrant lock must be released by the thread that acquired it. Once a</span></span><br><span class="line"><span class="string">thread has acquired a reentrant lock, the same thread may acquire it</span></span><br><span class="line"><span class="string">again without blocking; the thread must release it once for each time it</span></span><br><span class="line"><span class="string">has acquired it.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="init-1"><a href="#init-1" class="headerlink" title="init"></a>init</h3><p>初始化一个RLock，使用了三个成员：_block（锁本身）、_owner（锁的拥有者，初始为None）以及_count（获取锁的次数，recursion level）。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">    self._block = _allocate_lock()</span><br><span class="line">    self._owner = <span class="literal">None</span></span><br><span class="line">    self._count = <span class="number">0</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="acquire"><a href="#acquire" class="headerlink" title="acquire"></a>acquire</h3><p>尝试获取RLock，接受两个参数：blocking（默认为True）和timeout（默认为-1）。具体执行情况有：</p>
+<ul>
+<li>当线程已经获取了该锁，则递增recursion level然后返回。</li>
+<li>当其他线程拥有锁，则阻塞至获取锁或超时（timeout为正浮点数时）</li>
+</ul>
+<p>源程序如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">acquire</span>(<span class="params">self, blocking=<span class="literal">True</span>, timeout=-<span class="number">1</span></span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Acquire a lock, blocking or non-blocking.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    When invoked without arguments: if this thread already owns the lock,</span></span><br><span class="line"><span class="string">    increment the recursion level by one, and return immediately. Otherwise,</span></span><br><span class="line"><span class="string">    if another thread owns the lock, block until the lock is unlocked. Once</span></span><br><span class="line"><span class="string">    the lock is unlocked (not owned by any thread), then grab ownership, set</span></span><br><span class="line"><span class="string">    the recursion level to one, and return. If more than one thread is</span></span><br><span class="line"><span class="string">    blocked waiting until the lock is unlocked, only one at a time will be</span></span><br><span class="line"><span class="string">    able to grab ownership of the lock. There is no return value in this</span></span><br><span class="line"><span class="string">    case.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    When invoked with the blocking argument set to true, do the same thing</span></span><br><span class="line"><span class="string">    as when called without arguments, and return true.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    When invoked with the blocking argument set to false, do not block. If a</span></span><br><span class="line"><span class="string">    call without an argument would block, return false immediately;</span></span><br><span class="line"><span class="string">    otherwise, do the same thing as when called without arguments, and</span></span><br><span class="line"><span class="string">    return true.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    When invoked with the floating-point timeout argument set to a positive</span></span><br><span class="line"><span class="string">    value, block for at most the number of seconds specified by timeout</span></span><br><span class="line"><span class="string">    and as long as the lock cannot be acquired.  Return true if the lock has</span></span><br><span class="line"><span class="string">    been acquired, false if the timeout has elapsed.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    me = get_ident()</span><br><span class="line">    <span class="keyword">if</span> self._owner == me:  <span class="comment"># 如果已经拥有该锁，递增_count</span></span><br><span class="line">        self._count += <span class="number">1</span></span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span></span><br><span class="line">    rc = self._block.acquire(blocking, timeout) <span class="comment"># 尝试获取锁</span></span><br><span class="line">    <span class="keyword">if</span> rc:</span><br><span class="line">        self._owner = me</span><br><span class="line">        self._count = <span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="release"><a href="#release" class="headerlink" title="release"></a>release</h3><p>拥有锁的线程调用release递减获取的次数，次数递减至0则释放锁。只有拥有锁的线程可以调用，否则会触发运行时异常。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">release</span>(<span class="params">self</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Release a lock, decrementing the recursion level.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    If after the decrement it is zero, reset the lock to unlocked (not owned</span></span><br><span class="line"><span class="string">    by any thread), and if any other threads are blocked waiting for the</span></span><br><span class="line"><span class="string">    lock to become unlocked, allow exactly one of them to proceed. If after</span></span><br><span class="line"><span class="string">    the decrement the recursion level is still nonzero, the lock remains</span></span><br><span class="line"><span class="string">    locked and owned by the calling thread.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Only call this method when the calling thread owns the lock. A</span></span><br><span class="line"><span class="string">    RuntimeError is raised if this method is called when the lock is</span></span><br><span class="line"><span class="string">    unlocked.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    There is no return value.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">if</span> self._owner != get_ident(): <span class="comment"># 检查是否当前线程是锁的拥有者</span></span><br><span class="line">        <span class="keyword">raise</span> RuntimeError(<span class="string">&quot;cannot release un-acquired lock&quot;</span>)</span><br><span class="line">    self._count = count = self._count - <span class="number">1</span>  <span class="comment"># 递减count</span></span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> count:                          <span class="comment"># count为0则释放锁</span></span><br><span class="line">        self._owner = <span class="literal">None</span></span><br><span class="line">        self._block.release()</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://neutron-l.github.io/2023/02/23/python_condition_rlock/" data-id="clepks14f0000sou3h6700yy3" data-title="python conditon and RLock" class="article-share-link">Share</a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Concurrency/" rel="tag">Concurrency</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Python/" rel="tag">Python</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2023/02/20/rtti/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">RTTI</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Concurrency/" rel="tag">Concurrency</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp/" rel="tag">Cpp</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cache/" rel="tag">cache</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/02/23/python_condition_rlock/">python conditon and RLock</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/20/rtti/">RTTI</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/10/multiple_virtual_inheritance/">多重继承与虚继承</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/09/copy_control/">copy control</a>
+          </li>
+        
+          <li>
+            <a href="/2023/02/09/smart_pointer/">smart pointer</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Computer-System/">Computer System</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Data-Structure/">Data Structure</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Tool/">Tool</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/dpdk/">dpdk</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/language/">language</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">February 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">November 2022</a></li></ul>
+    </div>
+  </div>
+
+  
+</aside>
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2023 By Autoload<br>
+      Driven - <a href="https://hexo.io/" target="_blank">Hexo</a>|Theme - <a href="https://github.com/autoload/hexo-theme-auto" target="_blank">Auto</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+  </div>
+</body>
+</html>
