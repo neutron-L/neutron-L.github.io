@@ -82,9 +82,9 @@
 <p>typeid运算符的一些特点：</p>
 <ul>
 <li>忽略顶层const</li>
-<li>如果表达式是引用类型，返回其所引用对象的类型</li>
+<li>如果表达式是引用类型，返回其所引用对象的类型，而不是type reference</li>
 <li>作用于函数或数组时不会返回指针类型</li>
-<li>当运算对象不属于类类型或者是一个不包含任何虚函数的类时，typeid运算符指示的是运算符对象的静态类型</li>
+<li>当运算对象不属于类类型或者是一个不包含任何虚函数的类时，typeid运算符指示的是运算符对象的静态类型。例如，指向父类的指针和引用父类的引用，均返回其声明类型</li>
 <li>当运算对象定义了至少一个虚函数，其类型直到运行时才会求得</li>
 </ul>
 <p>typeid运算符使用示例程序</p>
@@ -191,9 +191,9 @@
     </a>
   
   
-    <a href="/2023/02/10/multiple_virtual_inheritance/" id="article-nav-older" class="article-nav-link-wrap">
+    <a href="/2023/02/10/object_layout/" id="article-nav-older" class="article-nav-link-wrap">
       <strong class="article-nav-caption">Older</strong>
-      <div class="article-nav-title">多重继承与虚继承</div>
+      <div class="article-nav-title">c++对象布局</div>
     </a>
   
 </nav>
@@ -209,7 +209,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Concurrency/" rel="tag">Concurrency</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp/" rel="tag">Cpp</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cache/" rel="tag">cache</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Concurrency/" rel="tag">Concurrency</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp/" rel="tag">Cpp</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp-Effective/" rel="tag">Cpp Effective</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp-%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/" rel="tag">Cpp 对象模型</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cache/" rel="tag">cache</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a></li></ul>
     </div>
   </div>
 
@@ -222,23 +222,23 @@
       <ul>
         
           <li>
+            <a href="/2023/03/05/hiding_name/">类继承中的名称遮掩</a>
+          </li>
+        
+          <li>
+            <a href="/2023/03/05/member_pointer/">Member Pointer</a>
+          </li>
+        
+          <li>
+            <a href="/2023/03/05/constructor/">Default &amp; Copy Constructor</a>
+          </li>
+        
+          <li>
             <a href="/2023/02/23/python_condition_rlock/">python conditon and RLock</a>
           </li>
         
           <li>
             <a href="/2023/02/20/rtti/">RTTI</a>
-          </li>
-        
-          <li>
-            <a href="/2023/02/10/multiple_virtual_inheritance/">多重继承与虚继承</a>
-          </li>
-        
-          <li>
-            <a href="/2023/02/09/copy_control/">copy control</a>
-          </li>
-        
-          <li>
-            <a href="/2023/02/09/smart_pointer/">smart pointer</a>
           </li>
         
       </ul>
@@ -260,7 +260,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Archives</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">February 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">November 2022</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/03/">March 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">February 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">November 2022</a></li></ul>
     </div>
   </div>
 
