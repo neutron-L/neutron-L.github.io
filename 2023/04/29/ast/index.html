@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>抽象语法树 | Keep Love</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Keep Love</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/categories">Categories</a>
+        
+          <a class="main-nav-link" href="/tags">Tags</a>
+        
+          <a class="main-nav-link" href="/about">About</a>
+        
+      </nav>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-ast" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/04/29/ast/" class="article-date">
+  <time class="dt-published" datetime="2023-04-29T01:36:03.703Z" itemprop="datePublished">2023-04-29</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/">编译原理</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      抽象语法树
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="AST"><a href="#AST" class="headerlink" title="AST"></a>AST</h2><p><img src="C:\Users\20550\AppData\Roaming\Typora\typora-user-images\image-20230504220248773.png" alt="image-20230504220248773"></p>
+<h2 id="class-definition"><a href="#class-definition" class="headerlink" title="class definition"></a>class definition</h2><h3 id="数据成员"><a href="#数据成员" class="headerlink" title="数据成员"></a>数据成员</h3><p>对于一个ast对象，其具备三个子树根节点，以及当前节点的字符串类型符号，另外，再保存一个bool类型变量，指示当前节点是否为叶子节点。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* AST */</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">AST</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">const</span> string val&#123;&#125;;</span><br><span class="line">    AST * left_child&#123;&#125;;</span><br><span class="line">    AST * mid_child&#123;&#125;;</span><br><span class="line">    AST * right_child&#123;&#125;;</span><br><span class="line">    <span class="type">bool</span> is_leaf&#123;&#125;;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">AST</span>()=<span class="keyword">default</span>;</span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="title">AST</span><span class="params">(<span class="type">const</span> string &amp; token)</span> : val(token) , is_leaf(isTerminate(token)) &#123;</span>&#125;</span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="title">AST</span><span class="params">(string &amp;&amp; token)</span> : val(std::move(token)) &#123;</span>&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>定义两个全局函数，用于判断符号是否为终结符号，以及是否为运算符。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">isTerminate</span><span class="params">(<span class="type">const</span> string &amp; str)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> !<span class="built_in">isupper</span>(str[<span class="number">0</span>]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">isOp</span><span class="params">(<span class="type">const</span> string &amp; str)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">switch</span> (str[<span class="number">0</span>])</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;+&#x27;</span>:</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;-&#x27;</span>:</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;*&#x27;</span>:</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;/&#x27;</span>:</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&#x27;%&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        <span class="keyword">default</span>:<span class="keyword">return</span> str == <span class="string">&quot;minus&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="方法"><a href="#方法" class="headerlink" title="方法"></a>方法</h3><p>除了默认构造函数以及两个接收string类型（左值和右值）的构造函数外，我们在定义两个成员方法和一个静态方法：</p>
+<ul>
+<li>built_ast：接受一个istream类型的参数，读取输入的ast文本表示信息，构建ast对象，该方法与特定的ast对象无关，因此用static修饰。</li>
+<li>post_traverse：接收一个ast类型参数，打印其四元式序列，本质为后序遍历。</li>
+<li>check：递归检查该ast的各层节点之间的“父子关系”，用于调试使用。</li>
+</ul>
+<p>首先实现逻辑较为简单的check，我们一次打印出当前节点的符号以及子树的符号即可，如果某一个子树为空，则用#替代</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">AST::check</span><span class="params">()</span> <span class="type">const</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    cout &lt;&lt; val &lt;&lt; <span class="string">&quot;: &quot;</span>;</span><br><span class="line">    <span class="keyword">if</span> (!is_leaf)</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; (left_child ? left_child-&gt;val : <span class="string">&quot;#&quot;</span>) &lt;&lt; <span class="string">&quot;\t&quot;</span> &lt;&lt; (mid_child ? mid_child-&gt;val : <span class="string">&quot;#&quot;</span>) &lt;&lt; <span class="string">&quot;\t&quot;</span> &lt;&lt; (right_child ? right_child-&gt;val : <span class="string">&quot;#&quot;</span>) &lt;&lt; endl;</span><br><span class="line">        <span class="keyword">if</span> (left_child)</span><br><span class="line">            left_child-&gt;<span class="built_in">check</span>();</span><br><span class="line">        <span class="keyword">if</span> (mid_child)</span><br><span class="line">            mid_child-&gt;<span class="built_in">check</span>();</span><br><span class="line">        <span class="keyword">if</span> (right_child)</span><br><span class="line">            right_child-&gt;<span class="built_in">check</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        cout &lt;&lt; endl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>再开post_traverse，</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">AST::post_traverse</span><span class="params">()</span> <span class="type">const</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!is_leaf)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (left_child &amp;&amp; !left_child-&gt;is_leaf)</span><br><span class="line">            left_child-&gt;<span class="built_in">post_traverse</span>();</span><br><span class="line">        <span class="keyword">if</span> (mid_child &amp;&amp; !mid_child-&gt;is_leaf)</span><br><span class="line">            mid_child-&gt;<span class="built_in">post_traverse</span>();</span><br><span class="line">        <span class="keyword">if</span> (right_child &amp;&amp; !right_child-&gt;is_leaf)</span><br><span class="line">            right_child-&gt;<span class="built_in">post_traverse</span>();</span><br><span class="line"></span><br><span class="line">        string operand1, op, operand2;</span><br><span class="line">        <span class="comment">// case 1. 一个左孩子，且为叶子节点</span></span><br><span class="line">        <span class="keyword">if</span> (left_child &amp;&amp; !mid_child &amp;&amp; !right_child)</span><br><span class="line">        &#123;</span><br><span class="line">            operand1 = left_child-&gt;val;</span><br><span class="line">            operand2 = <span class="string">&quot;-&quot;</span>;</span><br><span class="line">            op = <span class="string">&quot;:=&quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (mid_child &amp;&amp; right_child &amp;&amp; <span class="built_in">isOp</span>(mid_child-&gt;val))</span><br><span class="line">        &#123;</span><br><span class="line">            operand1 = left_child ? left_child-&gt;val : right_child-&gt;val;</span><br><span class="line">            operand2 = left_child ? right_child-&gt;val : <span class="string">&quot;-&quot;</span>;</span><br><span class="line">            op = mid_child-&gt;val;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (left_child &amp;&amp; right_child &amp;&amp; left_child-&gt;val == <span class="string">&quot;(&quot;</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            operand1 = mid_child-&gt;val;</span><br><span class="line">            operand2 = <span class="string">&quot;-&quot;</span>;</span><br><span class="line">            op = <span class="string">&quot;:=&quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        cout &lt;&lt; op &lt;&lt; <span class="string">&quot;,&quot;</span> &lt;&lt; operand1 &lt;&lt; <span class="string">&quot;,&quot;</span> &lt;&lt; operand2 &lt;&lt; <span class="string">&quot;,&quot;</span> &lt;&lt; val &lt;&lt; endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>build_ast的实现源码为：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"> <span class="function">AST *  <span class="title">AST::build_AST</span><span class="params">(istream &amp; in)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    string line;</span><br><span class="line">    stack&lt;pair&lt;<span class="type">uint32_t</span> , AST*&gt;&gt; stk;</span><br><span class="line">    <span class="keyword">while</span> (<span class="built_in">getline</span>(in, line))</span><br><span class="line">    &#123;</span><br><span class="line">        line.<span class="built_in">push_back</span>(<span class="string">&#x27; &#x27;</span>);</span><br><span class="line">        <span class="comment">// adjust idx to the first</span></span><br><span class="line">        <span class="type">uint32_t</span> idx = <span class="number">0</span>;</span><br><span class="line">        <span class="type">uint32_t</span> next_idx;</span><br><span class="line">        <span class="keyword">while</span> (idx &lt; line.<span class="built_in">length</span>() &amp;&amp; line[idx] == <span class="string">&#x27; &#x27;</span>)</span><br><span class="line">            ++idx;</span><br><span class="line">        <span class="keyword">while</span> (idx &lt; line.<span class="built_in">length</span>())</span><br><span class="line">        &#123;</span><br><span class="line">            next_idx = line.<span class="built_in">find</span>(<span class="string">&#x27; &#x27;</span>, idx);</span><br><span class="line">            string token = line.<span class="built_in">substr</span>(idx, next_idx - idx);</span><br><span class="line">            AST *node = <span class="keyword">new</span> <span class="built_in">AST</span>(token);</span><br><span class="line">            <span class="keyword">while</span> (!stk.<span class="built_in">empty</span>() &amp;&amp; stk.<span class="built_in">top</span>().first &gt;= idx)</span><br><span class="line">                stk.<span class="built_in">pop</span>();</span><br><span class="line">            <span class="comment">// 设置栈顶的节点的孩子节点</span></span><br><span class="line">            <span class="keyword">if</span> (!stk.<span class="built_in">empty</span>())</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">auto</span> &amp;dad = stk.<span class="built_in">top</span>().second;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// token 是左右括号</span></span><br><span class="line">                <span class="keyword">if</span> (token == <span class="string">&quot;(&quot;</span>)</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="built_in">assert</span>(dad-&gt;left_child == <span class="literal">nullptr</span>);</span><br><span class="line">                    dad-&gt;left_child = node;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">else</span> <span class="keyword">if</span> (token == <span class="string">&quot;)&quot;</span>)</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="built_in">assert</span>(dad-&gt;right_child == <span class="literal">nullptr</span>);</span><br><span class="line">                    dad-&gt;right_child = node;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">else</span></span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="keyword">if</span> (<span class="built_in">isOp</span>(token) || (dad-&gt;left_child &amp;&amp; dad-&gt;left_child-&gt;val == <span class="string">&quot;(&quot;</span>))</span><br><span class="line">                        dad-&gt;mid_child = node;</span><br><span class="line">                    <span class="keyword">else</span></span><br><span class="line">                    &#123;</span><br><span class="line">                        <span class="keyword">if</span> (!dad-&gt;mid_child)</span><br><span class="line">                            dad-&gt;left_child = node;</span><br><span class="line">                        <span class="keyword">else</span></span><br><span class="line">                            dad-&gt;right_child = node;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            stk.<span class="built_in">emplace</span>(idx, node);</span><br><span class="line"></span><br><span class="line">            idx = next_idx + <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> (stk.<span class="built_in">size</span>() &gt; <span class="number">1</span>)</span><br><span class="line">        stk.<span class="built_in">pop</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> stk.<span class="built_in">top</span>().second;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2><p>测试文件：</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">E minus</span><br><span class="line">  T1 T0 K num</span><br><span class="line">        /</span><br><span class="line">        20</span><br><span class="line">     *</span><br><span class="line">     F (</span><br><span class="line">       P M x</span><br><span class="line">           <span class="comment">%</span></span><br><span class="line">           6</span><br><span class="line">         +</span><br><span class="line">         j0</span><br><span class="line">       )</span><br></pre></td></tr></table></figure>
+
+<p>编写main函数，使用测试文件测试ast：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function">ifstream <span class="title">fin</span><span class="params">(<span class="string">&quot;tree.txt&quot;</span>)</span></span>;</span><br><span class="line">    <span class="keyword">if</span> (!fin.<span class="built_in">is_open</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        cerr &lt;&lt; <span class="string">&quot;Fail to open file\n&quot;</span>;</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">auto</span> *ast = AST::<span class="built_in">build_AST</span>(fin);</span><br><span class="line">    fin.<span class="built_in">close</span>();</span><br><span class="line"></span><br><span class="line">    ast-&gt;<span class="built_in">post_traverse</span>();</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;--------------------\n&quot;</span>;</span><br><span class="line">    ast-&gt;<span class="built_in">check</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">:=,num,-,K</span><br><span class="line">/,K,20,T0</span><br><span class="line"><span class="meta prompt_">%</span><span class="language-bash">,x,6,M</span></span><br><span class="line">+,M,j0,P</span><br><span class="line">:=,P,-,F</span><br><span class="line">*,T0,F,T1</span><br><span class="line">minus,T1,-,E</span><br><span class="line">--------------------</span><br><span class="line">E: #    minus   T1</span><br><span class="line">minus: </span><br><span class="line">T1: T0  *       F</span><br><span class="line">T0: K   /       20</span><br><span class="line">K: num  #       #</span><br><span class="line">num:</span><br><span class="line">/:</span><br><span class="line">20:</span><br><span class="line">*:</span><br><span class="line">F: (    P       )</span><br><span class="line">(:</span><br><span class="line">P: M    +       j0</span><br><span class="line">M: x    %       6</span><br><span class="line">x:</span><br><span class="line"><span class="meta prompt_">%</span><span class="language-bash">:</span></span><br><span class="line">6:</span><br><span class="line">+:</span><br><span class="line">j0:</span><br><span class="line">):</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://neutron-l.github.io/2023/04/29/ast/" data-id="cloxzibxl0000p8u3fspoh76t" data-title="抽象语法树" class="article-share-link">Share</a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" rel="tag">数据结构</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2023/05/15/spin_lock/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          自旋锁
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2023/04/06/mempool/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Mempool</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Concurrency/" rel="tag">Concurrency</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp/" rel="tag">Cpp</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp-Effective/" rel="tag">Cpp Effective</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp-STL/" rel="tag">Cpp STL</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp-%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/" rel="tag">Cpp 对象模型</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cache/" rel="tag">cache</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/leetcode-graph/" rel="tag">leetcode graph</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/leetcode-string/" rel="tag">leetcode string</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-%E6%B1%87%E7%BC%96%E8%AF%AD%E8%A8%80/" rel="tag">操作系统 汇编语言</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" rel="tag">数据结构</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/05/15/spin_lock/">自旋锁</a>
+          </li>
+        
+          <li>
+            <a href="/2023/04/29/ast/">抽象语法树</a>
+          </li>
+        
+          <li>
+            <a href="/2023/04/06/mempool/">Mempool</a>
+          </li>
+        
+          <li>
+            <a href="/2023/03/27/type_traits/">type traits</a>
+          </li>
+        
+          <li>
+            <a href="/2023/03/17/longest_incremental_subseq/">最长递增子序列</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Computer-System/">Computer System</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Data-Structure/">Data Structure</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Tool/">Tool</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/dpdk/">dpdk</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/language/">language</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/">编译原理</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">May 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">April 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/03/">March 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">February 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">November 2022</a></li></ul>
+    </div>
+  </div>
+
+  
+</aside>
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2023 By Autoload<br>
+      Driven - <a href="https://hexo.io/" target="_blank">Hexo</a>|Theme - <a href="https://github.com/autoload/hexo-theme-auto" target="_blank">Auto</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+  </div>
+</body>
+</html>

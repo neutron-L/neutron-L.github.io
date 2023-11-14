@@ -47,8 +47,8 @@
       <div class="outer">
         <section id="main"><article id="post-mempool" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
-    <a href="/2022/11/17/mempool/" class="article-date">
-  <time class="dt-published" datetime="2022-11-17T08:49:07.774Z" itemprop="datePublished">2022-11-17</time>
+    <a href="/2023/04/06/mempool/" class="article-date">
+  <time class="dt-published" datetime="2023-04-06T13:11:23.542Z" itemprop="datePublished">2023-04-06</time>
 </a>
     
   <div class="article-category">
@@ -75,8 +75,8 @@
 <h1 id="Structure"><a href="#Structure" class="headerlink" title="Structure"></a>Structure</h1><p>mempool可以分配固定大小的对象，通过三部分组织实现：</p>
 <ul>
 <li>mempool对象节点：mempool的对象挂在在<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">rte_tailq_elem</span> <span class="title">rte_mempool_tailq</span> =</span> &#123;</span><br><span class="line">	.name = <span class="string">&quot;RTE_MEMPOOL&quot;</span>,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></li>
-<li>mempool实际内存区：实际分配的连续内存空间，存储所创建的mempool对象；</li>
-<li>ring：一个无锁环形队列，存储着指向mempool对象的指针，提供了对mempool中对象的存取</li>
+<li>mempool实际内存区：实际分配的连续内存空间，当需要为指定对象分配内存时，所申请的内存都位于这里，可以把它想象为一个指定类型对象的数组，每一个位置是一块可用内存，用来存放我们指定的对象；</li>
+<li>ring：一个无锁环形队列，存储着指向可用内存的指针，这些指针所指的区域均位于mempool中。这个ring是用来管理mempool中的可用内存的，可以想象为，mempool是一系列可用的内存块，每块内存可用存放指定的对象，而ring中则存放着，这些可用对象的地址。</li>
 </ul>
 <h2 id="struct"><a href="#struct" class="headerlink" title="struct"></a>struct</h2><p>有两个主要的数据结构，用于实现mempool的表示</p>
 <h3 id="rte-mempool"><a href="#rte-mempool" class="headerlink" title="rte_mempool"></a>rte_mempool</h3><p>保存关于mempool的名字、ring、私有数据大小、核相关cache等信息。</p>
@@ -127,7 +127,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://neutron-l.github.io/2022/11/17/mempool/" data-id="claniqaki000cs4u3d7ufh2w8" data-title="Mempool" class="article-share-link">Share</a>
+      <a data-url="https://neutron-l.github.io/2023/04/06/mempool/" data-id="claniqaki000cs4u3d7ufh2w8" data-title="Mempool" class="article-share-link">Share</a>
       
       
       
@@ -139,19 +139,19 @@
     
 <nav id="article-nav">
   
-    <a href="/2022/11/18/mbuf/" id="article-nav-newer" class="article-nav-link-wrap">
+    <a href="/2023/04/29/ast/" id="article-nav-newer" class="article-nav-link-wrap">
       <strong class="article-nav-caption">Newer</strong>
       <div class="article-nav-title">
         
-          Mbuf
+          抽象语法树
         
       </div>
     </a>
   
   
-    <a href="/2022/11/17/ring/" id="article-nav-older" class="article-nav-link-wrap">
+    <a href="/2023/03/27/type_traits/" id="article-nav-older" class="article-nav-link-wrap">
       <strong class="article-nav-caption">Older</strong>
-      <div class="article-nav-title">Ring</div>
+      <div class="article-nav-title">type traits</div>
     </a>
   
 </nav>
@@ -167,7 +167,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Concurrency/" rel="tag">Concurrency</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp/" rel="tag">Cpp</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp-Effective/" rel="tag">Cpp Effective</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp-STL/" rel="tag">Cpp STL</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp-%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/" rel="tag">Cpp 对象模型</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cache/" rel="tag">cache</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/leetcode-graph/" rel="tag">leetcode graph</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/leetcode-string/" rel="tag">leetcode string</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Concurrency/" rel="tag">Concurrency</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp/" rel="tag">Cpp</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp-Effective/" rel="tag">Cpp Effective</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp-STL/" rel="tag">Cpp STL</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp-%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/" rel="tag">Cpp 对象模型</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cache/" rel="tag">cache</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/leetcode-graph/" rel="tag">leetcode graph</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/leetcode-string/" rel="tag">leetcode string</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-%E6%B1%87%E7%BC%96%E8%AF%AD%E8%A8%80/" rel="tag">操作系统 汇编语言</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" rel="tag">数据结构</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a></li></ul>
     </div>
   </div>
 
@@ -180,23 +180,23 @@
       <ul>
         
           <li>
+            <a href="/2023/05/15/spin_lock/">自旋锁</a>
+          </li>
+        
+          <li>
+            <a href="/2023/04/29/ast/">抽象语法树</a>
+          </li>
+        
+          <li>
+            <a href="/2023/04/06/mempool/">Mempool</a>
+          </li>
+        
+          <li>
             <a href="/2023/03/27/type_traits/">type traits</a>
           </li>
         
           <li>
             <a href="/2023/03/17/longest_incremental_subseq/">最长递增子序列</a>
-          </li>
-        
-          <li>
-            <a href="/2023/03/17/longest_topograph_path/">有向无环图中最长路径</a>
-          </li>
-        
-          <li>
-            <a href="/2023/03/17/longest_palindrome_substring/">最长回文子串</a>
-          </li>
-        
-          <li>
-            <a href="/2023/03/05/hiding_name/">类继承中的名称遮掩</a>
           </li>
         
       </ul>
@@ -208,7 +208,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Categories</h3>
     <div class="widget">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Computer-System/">Computer System</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Data-Structure/">Data Structure</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Tool/">Tool</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/dpdk/">dpdk</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/language/">language</a></li></ul>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Computer-System/">Computer System</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Data-Structure/">Data Structure</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Tool/">Tool</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/dpdk/">dpdk</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/language/">language</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/">编译原理</a></li></ul>
     </div>
   </div>
 
@@ -218,7 +218,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Archives</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/03/">March 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">February 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">November 2022</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">May 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">April 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/03/">March 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">February 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">November 2022</a></li></ul>
     </div>
   </div>
 

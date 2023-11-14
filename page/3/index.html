@@ -47,6 +47,112 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-type_conversion" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2022/11/19/type_conversion/" class="article-date">
+  <time class="dt-published" datetime="2022-11-19T03:00:54.570Z" itemprop="datePublished">2022-11-19</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/language/">language</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2022/11/19/type_conversion/">类型转换</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>有时候我们需要在表达式中显示地将对象强制转换为另一种类型参与运算，称作**强制类型转换(cast)<strong>。一个命名的强制类型的形式为</strong>cast-name<type>(expression)**，其中type是转换的目标而expression是要转换的值。  </p>
+<h2 id="static-cast"><a href="#static-cast" class="headerlink" title="static_cast"></a>static_cast</h2><p>任何具有明确定义的类型转换，且不包含底层const，都可以使用static_cast。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// convert int to double</span></span><br><span class="line"><span class="type">int</span> a = <span class="number">9</span>;</span><br><span class="line"><span class="type">int</span> b = <span class="number">8</span>;</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; a / b &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; static_cast&lt;<span class="type">double</span>&gt;(a) / b &lt;&lt;<span class="built_in">endl</span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// 具有底层const，无法使用static_cast</span></span><br><span class="line"><span class="type">const</span> <span class="type">char</span> * p = <span class="string">&quot;helloworld&quot;</span>;</span><br><span class="line"><span class="type">char</span> * q = static_cast&lt;<span class="type">char</span> *&gt;(p);  <span class="comment">// compile error</span></span><br><span class="line">*q = <span class="string">&#x27;H&#x27;</span>;</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; q &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 顶层const可以使用static_cast</span></span><br><span class="line"><span class="type">char</span> * <span class="type">const</span> x = <span class="string">&quot;aloha&quot;</span>;</span><br><span class="line"><span class="type">char</span> * y = static_cast&lt;<span class="type">char</span> *&gt;(x);  <span class="comment">// 去掉顶层const</span></span><br><span class="line">y = <span class="string">&quot;hello&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; x &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; y &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"><span class="comment">// 转换为string</span></span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; static_cast&lt;<span class="built_in">string</span>&gt;(x) &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; static_cast&lt;<span class="built_in">string</span>&gt;(y) &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; static_cast&lt;<span class="type">const</span> <span class="built_in">string</span>&gt;(y) &lt;&lt; <span class="built_in">endl</span>;  <span class="comment">// 添加顶层const</span></span><br></pre></td></tr></table></figure>
+<h2 id="const-cast"><a href="#const-cast" class="headerlink" title="const_cast"></a>const_cast</h2><p>const_cast只能改变运算对象的底层const。对于将常量对象转换为非常量对象，称为<strong>去掉const性质</strong>。如果对象本身不是常量，则获得写权限是合法的行为，反之对其进行写操作会产生未定义的后果。 const_cast接受的操作对象只能是指针、引用或者指向类类型对象的成员指针。<br>const_cast与static_cast对比</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">char</span> * sp;</span><br><span class="line"><span class="type">char</span> *q = static_cast&lt;<span class="type">char</span> *&gt;(sp); <span class="comment">// compile error</span></span><br><span class="line">static_cast&lt;<span class="built_in">string</span>&gt;(sp); <span class="comment">// true.字符串字面值转换为string类型</span></span><br><span class="line">const_cast&lt;<span class="built_in">string</span>&gt;(sp); <span class="comment">// compile error.只能改变常量属性</span></span><br><span class="line"><span class="type">char</span> * l = const_cast&lt;<span class="type">char</span>*&gt; (sp); <span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+<p>使用const_cast获得常量的写操作权限</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">write_const</span><span class="params">(<span class="type">const</span> <span class="type">char</span> * cp)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">char</span> * q = const_cast&lt;<span class="type">char</span>*&gt; (cp); </span><br><span class="line">    *q = <span class="string">&#x27;H&#x27;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该函数通过将指向常量的指针参数，去掉其底层const，尝试进行写操纵。<br>当cp指向真正的常量时，如下main函数</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span> * sp = <span class="string">&quot;helloworld&quot;</span>; <span class="comment">// sp指向字符串常量</span></span><br><span class="line">    write_const(sp);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译通过，运行。触发segment fault:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt; g++ main.cc -g -o main &amp;&amp; ./main </span><br><span class="line">fish: Job 1, <span class="string">&#x27;./main&#x27;</span> terminated by signal SIGSEGV (Address boundary error)</span><br></pre></td></tr></table></figure>
+<p>若sp指向的是非常量</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">char</span> arr[] = <span class="string">&quot;helloworld&quot;</span>;</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span> * sp = arr; <span class="comment">// sp指向字符串常量</span></span><br><span class="line">    write_const(sp);</span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; sp &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译通过，运行，写入成功:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt; g++ main.cc -g -o main &amp;&amp; ./main </span><br><span class="line">Helloworld</span><br></pre></td></tr></table></figure>
+<p>如下程序通过去掉const特性修改string的内容：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> **argv)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">const</span> string s = <span class="string">&quot;Hello&quot;</span>;</span><br><span class="line">    <span class="type">const</span> string &amp; crs = s;</span><br><span class="line">    string &amp; rs = <span class="built_in">const_cast</span>&lt;string &amp;&gt;(crs);</span><br><span class="line">    cout &lt;&lt; s &lt;&lt; <span class="string">&#x27; &#x27;</span> &lt;&lt; crs &lt;&lt; <span class="string">&#x27; &#x27;</span> &lt;&lt; rs&lt;&lt;endl;</span><br><span class="line">    rs = <span class="string">&quot;world&quot;</span>;</span><br><span class="line">    cout &lt;&lt; s &lt;&lt; <span class="string">&#x27; &#x27;</span> &lt;&lt; crs &lt;&lt; <span class="string">&#x27; &#x27;</span> &lt;&lt; rs&lt;&lt;endl;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>运行结果如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">g++ main.cc -g -o a &amp;&amp; ./a</span></span><br><span class="line">Hello Hello Hello</span><br><span class="line">world world world</span><br></pre></td></tr></table></figure>
+
+<p>const_cast操作对象不是指针或引用时会编译出错：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> **argv)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    string s = <span class="string">&quot;hello&quot;</span>;</span><br><span class="line">    <span class="type">const</span> string cs = <span class="built_in">const_cast</span>&lt;<span class="type">const</span> string&gt;(s); <span class="comment">// the type in a const_cast must be a pointer, reference, or pointer to member to an object type</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="reinterpret-cast"><a href="#reinterpret-cast" class="headerlink" title="reinterpret_cast"></a>reinterpret_cast</h2><p>reinterpret_cast通常为运算对象的位模式提供较低层次上的重新解释。  </p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 将一段存储数字的内存的地址转换为字符串的地址，并输出</span></span><br><span class="line"><span class="type">int</span> arri[] = &#123;<span class="number">0x6c6c6568</span>, <span class="number">0x726f776f</span>, <span class="number">0x646c</span>&#125;;</span><br><span class="line"><span class="type">char</span> * p = reinterpret_cast&lt;<span class="type">char</span> *&gt;(arri);</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; p &lt;&lt; <span class="built_in">endl</span>;</span><br></pre></td></tr></table></figure>
+<p>运行结果为</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt; g++ main.cc -g -o main &amp;&amp; ./main</span><br><span class="line">helloworld</span><br></pre></td></tr></table></figure>
+<h2 id="dynamic-cast"><a href="#dynamic-cast" class="headerlink" title="dynamic_cast"></a>dynamic_cast</h2><p>dynamic_cast运算符，用于将基类指针或引用安全转换为派生类的指针或引用。使用形式如下</p>
+<ul>
+<li><p>dynamic_cast&lt;type *&gt;(e)，e必须是一个有效的指针</p>
+</li>
+<li><p>dynamic_cast&lt;type &amp;&gt;(e)，e必须是一个左值</p>
+</li>
+<li><p>dynamic_cast&lt;type &amp;&amp;&gt;(e)，e不能是左值</p>
+</li>
+</ul>
+<p>其中，type必须是一个类类型，并且通常情况下该类型应该含有虚函数。e的类型必须符合如下三个条件中任一一个：</p>
+<ul>
+<li>e的类型是目标type的公有派生类</li>
+<li>e的类型是目标typpe的公有基类</li>
+<li>e的类型就说目标type的类型</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">base</span>()</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot; \n base constructor \n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">derived</span> : <span class="keyword">public</span> base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">derived</span>()</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot; \n derived constructor \n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"></span><br><span class="line">    base *obj = <span class="keyword">new</span> derived;                     <span class="comment">// case 1: explicitly upcasting</span></span><br><span class="line">    derived *OBJ = <span class="built_in">dynamic_cast</span>&lt;derived *&gt;(obj); <span class="comment">// case 2: error</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>此种情况下，base类没有虚函数，编译器会提示错误信息</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">the operand of a runtime dynamic_cast must have a polymorphic class typeC/C++(698)</span><br></pre></td></tr></table></figure>
+
+<p>任一添加虚函数后，程序通过编译(note: 虚函数必须有定义，不能只声明)。</p>
+<p>对于转换类型是指针和引用，当转换失败时的行为不同：若一条 dynamic_cast语句的转换目标是指针类型，则结果为0；若转换目标是引用类型，则dynamic_cast运算符抛出bad_cast异常。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">base</span>()</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot; \n base constructor \n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">foo</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">derived</span> : <span class="keyword">public</span> base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">derived</span>()</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot; \n derived constructor \n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// case 1: pointer</span></span><br><span class="line">    base *obj = <span class="keyword">new</span> derived;                     <span class="comment">// case 1: explicitly upcasting</span></span><br><span class="line">    derived *OBJ = <span class="built_in">dynamic_cast</span>&lt;derived *&gt;(obj); <span class="comment">// case 2: error</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// case 2: reference</span></span><br><span class="line">    derived d;</span><br><span class="line">    base &amp;rb = d;</span><br><span class="line">    <span class="keyword">try</span></span><br><span class="line">    &#123;</span><br><span class="line">        derived &amp;rd = <span class="built_in">dynamic_cast</span>&lt;derived &amp;&gt;(rb);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">catch</span> (<span class="type">const</span> std::exception &amp;e)</span><br><span class="line">    &#123;</span><br><span class="line">        std::cerr &lt;&lt; e.<span class="built_in">what</span>() &lt;&lt; <span class="string">&#x27;\n&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// case 3: rvalue</span></span><br><span class="line">    <span class="comment">// derived &amp;&amp;rrd = dynamic_cast&lt;derived &amp;&amp;&gt;(base());</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">delete</span> obj;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>上述例子可以运行成功。下面这个例子中的指针和引用转换失败：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// case 1: pointer</span></span><br><span class="line">    base *obj = <span class="keyword">new</span> base;</span><br><span class="line">    derived *OBJ = <span class="built_in">dynamic_cast</span>&lt;derived *&gt;(obj); <span class="comment">// fail: return nullptr</span></span><br><span class="line">    <span class="built_in">assert</span>(OBJ == <span class="literal">nullptr</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// case 2: reference</span></span><br><span class="line">    base b;</span><br><span class="line">    base &amp;rb = b;</span><br><span class="line">    <span class="keyword">try</span></span><br><span class="line">    &#123;</span><br><span class="line">        derived &amp;rd = <span class="built_in">dynamic_cast</span>&lt;derived &amp;&gt;(rb);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">catch</span> (<span class="type">const</span> std::exception &amp;e)</span><br><span class="line">    &#123;</span><br><span class="line">        std::cerr &lt;&lt; e.<span class="built_in">what</span>() &lt;&lt; <span class="string">&#x27;\n&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">delete</span> obj;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出结果如下</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">std::bad_cast</span><br></pre></td></tr></table></figure>
+
+
+
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://neutron-l.github.io/2022/11/19/type_conversion/" data-id="claniqakp000ws4u3h5ut65h7" data-title="类型转换" class="article-share-link">Share</a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Cpp/" rel="tag">Cpp</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-ring" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/2022/11/17/ring/" class="article-date">
@@ -461,7 +567,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Concurrency/" rel="tag">Concurrency</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp/" rel="tag">Cpp</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp-Effective/" rel="tag">Cpp Effective</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp-STL/" rel="tag">Cpp STL</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp-%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/" rel="tag">Cpp 对象模型</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cache/" rel="tag">cache</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/leetcode-graph/" rel="tag">leetcode graph</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/leetcode-string/" rel="tag">leetcode string</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Concurrency/" rel="tag">Concurrency</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp/" rel="tag">Cpp</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp-Effective/" rel="tag">Cpp Effective</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp-STL/" rel="tag">Cpp STL</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Cpp-%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/" rel="tag">Cpp 对象模型</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cache/" rel="tag">cache</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/leetcode-graph/" rel="tag">leetcode graph</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/leetcode-string/" rel="tag">leetcode string</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-%E6%B1%87%E7%BC%96%E8%AF%AD%E8%A8%80/" rel="tag">操作系统 汇编语言</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" rel="tag">数据结构</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a></li></ul>
     </div>
   </div>
 
@@ -474,23 +580,23 @@
       <ul>
         
           <li>
+            <a href="/2023/05/15/spin_lock/">自旋锁</a>
+          </li>
+        
+          <li>
+            <a href="/2023/04/29/ast/">抽象语法树</a>
+          </li>
+        
+          <li>
+            <a href="/2023/04/06/mempool/">Mempool</a>
+          </li>
+        
+          <li>
             <a href="/2023/03/27/type_traits/">type traits</a>
           </li>
         
           <li>
             <a href="/2023/03/17/longest_incremental_subseq/">最长递增子序列</a>
-          </li>
-        
-          <li>
-            <a href="/2023/03/17/longest_topograph_path/">有向无环图中最长路径</a>
-          </li>
-        
-          <li>
-            <a href="/2023/03/17/longest_palindrome_substring/">最长回文子串</a>
-          </li>
-        
-          <li>
-            <a href="/2023/03/05/hiding_name/">类继承中的名称遮掩</a>
           </li>
         
       </ul>
@@ -502,7 +608,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Categories</h3>
     <div class="widget">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Computer-System/">Computer System</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Data-Structure/">Data Structure</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Tool/">Tool</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/dpdk/">dpdk</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/language/">language</a></li></ul>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Computer-System/">Computer System</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Data-Structure/">Data Structure</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Tool/">Tool</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/algorithm/">algorithm</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/dpdk/">dpdk</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/language/">language</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/">编译原理</a></li></ul>
     </div>
   </div>
 
@@ -512,7 +618,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Archives</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/03/">March 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">February 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">November 2022</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">May 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">April 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/03/">March 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">February 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">November 2022</a></li></ul>
     </div>
   </div>
 
