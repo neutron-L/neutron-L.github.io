@@ -71,12 +71,12 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <h1 id="Intruduction"><a href="#Intruduction" class="headerlink" title="Intruduction"></a>Intruduction</h1><p>内存池（memory pool）是固定大小对象的分配器。在DPDK中，它由name唯一标识，并使用mempool handler存储空闲对象。默认的mempool handler是基于<strong>ring</strong>的。它提供了一些其他可选的服务，例如每核心对象缓存和对齐帮助器，以确保对象被填充，从而在所有DRAM或DDR3通道上均匀分布。</p>
+        <h1 id="Intruduction"><a href="#Intruduction" class="headerlink" title="Intruduction"></a>Intruduction</h1><p>内存池（memory pool）是固定大小对象的分配器。在DPDK中，它由name唯一标识，并使用mempool handler存储空闲对象。默认的mempool handler是基于<strong>ring</strong>的。它提供了一些其他可选的服务，例如**每核心对象缓存(per-core object cache)**和对齐帮助器，以确保对象被填充，从而在所有DRAM或DDR3通道上均匀分布。</p>
 <h1 id="Structure"><a href="#Structure" class="headerlink" title="Structure"></a>Structure</h1><p>mempool可以分配固定大小的对象，通过三部分组织实现：</p>
 <ul>
 <li>mempool对象节点：mempool的对象挂在在<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">rte_tailq_elem</span> <span class="title">rte_mempool_tailq</span> =</span> &#123;</span><br><span class="line">	.name = <span class="string">&quot;RTE_MEMPOOL&quot;</span>,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></li>
 <li>mempool实际内存区：实际分配的连续内存空间，当需要为指定对象分配内存时，所申请的内存都位于这里，可以把它想象为一个指定类型对象的数组，每一个位置是一块可用内存，用来存放我们指定的对象；</li>
-<li>ring：一个无锁环形队列，存储着指向可用内存的指针，这些指针所指的区域均位于mempool中。这个ring是用来管理mempool中的可用内存的，可以想象为，mempool是一系列可用的内存块，每块内存可用存放指定的对象，而ring中则存放着，这些可用对象的地址。</li>
+<li>ring：一个无锁环形队列，存储着指向可用内存的指针，这些指针所指的区域均位于mempool中。这个ring是用来管理mempool中的可用内存的，可以想象为，mempool是一系列可用的内存块，每块内存可用于存放指定的对象，而ring中则存放着这些可用对象的地址。</li>
 </ul>
 <h2 id="struct"><a href="#struct" class="headerlink" title="struct"></a>struct</h2><p>有两个主要的数据结构，用于实现mempool的表示</p>
 <h3 id="rte-mempool"><a href="#rte-mempool" class="headerlink" title="rte_mempool"></a>rte_mempool</h3><p>保存关于mempool的名字、ring、私有数据大小、核相关cache等信息。</p>
@@ -180,6 +180,10 @@
       <ul>
         
           <li>
+            <a href="/2024/02/26/DPDK%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E4%BC%98%E5%8C%96/">Ring</a>
+          </li>
+        
+          <li>
             <a href="/2023/05/15/spin_lock/">自旋锁</a>
           </li>
         
@@ -193,10 +197,6 @@
         
           <li>
             <a href="/2023/03/27/type_traits/">type traits</a>
-          </li>
-        
-          <li>
-            <a href="/2023/03/17/longest_incremental_subseq/">最长递增子序列</a>
           </li>
         
       </ul>
@@ -218,7 +218,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Archives</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">May 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">April 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/03/">March 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">February 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">November 2022</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/02/">February 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">May 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">April 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/03/">March 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">February 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">November 2022</a></li></ul>
     </div>
   </div>
 
@@ -229,7 +229,7 @@
   
   <div class="outer">
     <div id="footer-info" class="inner">
-      &copy; 2023 By Autoload<br>
+      &copy; 2024 By Autoload<br>
       Driven - <a href="https://hexo.io/" target="_blank">Hexo</a>|Theme - <a href="https://github.com/autoload/hexo-theme-auto" target="_blank">Auto</a>
     </div>
   </div>

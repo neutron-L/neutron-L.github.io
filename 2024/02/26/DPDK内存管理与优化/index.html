@@ -45,10 +45,10 @@
 </header>
 
       <div class="outer">
-        <section id="main"><article id="post-ring" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+        <section id="main"><article id="post-DPDK内存管理与优化" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
-    <a href="/2022/11/17/ring/" class="article-date">
-  <time class="dt-published" datetime="2022-11-17T05:57:56.045Z" itemprop="datePublished">2022-11-17</time>
+    <a href="/2024/02/26/DPDK%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E4%BC%98%E5%8C%96/" class="article-date">
+  <time class="dt-published" datetime="2024-02-26T10:12:20.272Z" itemprop="datePublished">2024-02-26</time>
 </a>
     
   <div class="article-category">
@@ -71,7 +71,7 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <p>ring，即rte_ring，是dpdk中的一种用于存取数据的基础数据结构，本质上是一种无锁实现的环形队列（lock-free）。</p>
+        <p>本文主要介绍DPDK在使用和管理内存方面涉及到的技术和机制，以及如何利用这些机制优化网络报文的接收、处理和转发。</p>
 <h1 id="Feature"><a href="#Feature" class="headerlink" title="Feature"></a>Feature</h1><ul>
 <li>FIFO</li>
 <li>maximum size是固定的，指针存放在一个table中</li>
@@ -149,7 +149,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://neutron-l.github.io/2022/11/17/ring/" data-id="claniqakj000ds4u3hzich8ch" data-title="Ring" class="article-share-link">Share</a>
+      <a data-url="https://neutron-l.github.io/2024/02/26/DPDK%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E4%BC%98%E5%8C%96/" data-id="clt40jr2s0000msu315v9btm8" data-title="Ring" class="article-share-link">Share</a>
       
       
       
@@ -161,19 +161,10 @@
     
 <nav id="article-nav">
   
-    <a href="/2022/11/19/type_conversion/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Newer</strong>
-      <div class="article-nav-title">
-        
-          类型转换
-        
-      </div>
-    </a>
   
-  
-    <a href="/2022/11/14/auto_decltype/" id="article-nav-older" class="article-nav-link-wrap">
+    <a href="/2023/05/15/spin_lock/" id="article-nav-older" class="article-nav-link-wrap">
       <strong class="article-nav-caption">Older</strong>
-      <div class="article-nav-title">auto decltype</div>
+      <div class="article-nav-title">自旋锁</div>
     </a>
   
 </nav>

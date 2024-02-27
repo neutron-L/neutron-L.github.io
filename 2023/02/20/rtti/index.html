@@ -160,7 +160,7 @@
     </tr>
 </table>
 
-<p>需要注意的是，type_info对象只能由typeid运算符创建。如下程序测试c++ primer练习19.10：</p>
+<p>需要注意的是，<strong>type_info对象只能由typeid运算符创建</strong>。如下程序测试c++ primer练习19.10：</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">A</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">virtual</span> ~<span class="built_in">A</span>() &#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">B</span> : <span class="keyword">public</span> A</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">virtual</span> ~<span class="built_in">B</span>() &#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">C</span> : <span class="keyword">public</span> B</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">virtual</span> ~<span class="built_in">C</span>() &#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    A *pa = <span class="keyword">new</span> C;</span><br><span class="line">    cout &lt;&lt; <span class="built_in">typeid</span>(pa).<span class="built_in">name</span>() &lt;&lt; endl;</span><br><span class="line"></span><br><span class="line">    C cobj;</span><br><span class="line">    A &amp;ra = cobj;</span><br><span class="line">    cout &lt;&lt; <span class="built_in">typeid</span>(&amp;ra).<span class="built_in">name</span>() &lt;&lt; endl; </span><br><span class="line">    B *px = <span class="keyword">new</span> B;</span><br><span class="line">    A &amp;rra = *px;</span><br><span class="line">    cout &lt;&lt; <span class="built_in">typeid</span>(rra).<span class="built_in">name</span>() &lt;&lt; endl; </span><br><span class="line"></span><br><span class="line">    <span class="keyword">delete</span> px;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>运行结果如下：</p>
@@ -222,6 +222,10 @@
       <ul>
         
           <li>
+            <a href="/2024/02/26/DPDK%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E4%BC%98%E5%8C%96/">Ring</a>
+          </li>
+        
+          <li>
             <a href="/2023/05/15/spin_lock/">自旋锁</a>
           </li>
         
@@ -235,10 +239,6 @@
         
           <li>
             <a href="/2023/03/27/type_traits/">type traits</a>
-          </li>
-        
-          <li>
-            <a href="/2023/03/17/longest_incremental_subseq/">最长递增子序列</a>
           </li>
         
       </ul>
@@ -260,7 +260,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Archives</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">May 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">April 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/03/">March 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">February 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">November 2022</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/02/">February 2024</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">May 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">April 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/03/">March 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">February 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">November 2022</a></li></ul>
     </div>
   </div>
 
@@ -271,7 +271,7 @@
   
   <div class="outer">
     <div id="footer-info" class="inner">
-      &copy; 2023 By Autoload<br>
+      &copy; 2024 By Autoload<br>
       Driven - <a href="https://hexo.io/" target="_blank">Hexo</a>|Theme - <a href="https://github.com/autoload/hexo-theme-auto" target="_blank">Auto</a>
     </div>
   </div>
