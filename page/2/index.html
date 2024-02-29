@@ -47,6 +47,87 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-member_pointer" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/03/05/member_pointer/" class="article-date">
+  <time class="dt-published" datetime="2023-03-05T01:39:28.980Z" itemprop="datePublished">2023-03-05</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/language/">language</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2023/03/05/member_pointer/">Member Pointer</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>![sunset](C:\Users\20550\Pictures\Saved Pictures\sunset4.jpg)</p>
+<p>本文讨论C++类中数据成员（static和non-static）的排列、静态函数、成员函数和虚函数在内存中的布局以及调用过程，认识指向成员的指针，以便加深对类对象布局的理解。</p>
+<h2 id="指向data-member的指针"><a href="#指向data-member的指针" class="headerlink" title="指向data member的指针"></a>指向data member的指针</h2><h3 id="static-data-members"><a href="#static-data-members" class="headerlink" title="static data members"></a>static data members</h3><p>静态数据成员存放于类之外，被视为一个全局变量，但仅在class生命范围内可见。因此如果一个类Obj有一个静态类型的整型变量a，则</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&amp;Obj::a</span><br></pre></td></tr></table></figure>
+
+<p>会获得如下内存地址：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">int *</span><br></pre></td></tr></table></figure>
+
+<p>类中的静态成员的名称一般被使用name-mangling编码为一个独一无二的名称，以便不同类中的相同名称的静态变量不会冲突。</p>
+<h3 id="nonstatic-data-members"><a href="#nonstatic-data-members" class="headerlink" title="nonstatic data members"></a>nonstatic data members</h3><p>nonstatic data members在class object中的排列顺序和其被声明的顺序一样，任何介入的static data members都不会被放入到对象布局中。我们也可以对nonstatic 类型的data member取地址，如同static类型的变量一样，假设有一个Obj类，包含一个整型的数据成员b，则我们也可以进行如下操作：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&amp;Point3d::b</span><br></pre></td></tr></table></figure>
+
+<p>不同于static类型的成员，上述操作不会得到b的内存地址，这是显而易见的，因为每个不同的对象都有一份b。其实它的类型为**int Obj::<strong>*，而不是**int *<strong>，含义是b成员在对象中的</strong>偏移</strong>（offset）。</p>
+<p>如下测试程序，Foo类包含一个成员方法，用于打印其内部数据成员的对象内部偏移：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Foo</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">    <span class="type">static</span> <span class="type">int</span> sx;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> y;</span><br><span class="line">    <span class="type">float</span> z;</span><br><span class="line">    <span class="type">static</span> <span class="type">void</span> *sp;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="type">double</span> d;</span><br><span class="line"></span><br><span class="line"><span class="keyword">protected</span>:</span><br><span class="line">    <span class="type">char</span> c;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="type">char</span> a;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">()</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;static data: %p %p\n&quot;</span>, &amp;Foo::sx, &amp;Foo::sp);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%d %d %d %d %d %d\n&quot;</span>,</span><br><span class="line">               &amp;Foo::x, &amp;Foo::y, &amp;Foo::z, &amp;Foo::d, &amp;Foo::c, &amp;Foo::a);</span><br><span class="line">        cout &lt;&lt; <span class="built_in">sizeof</span>(*<span class="keyword">this</span>) &lt;&lt; endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> Foo::sx = <span class="number">19</span>;    <span class="comment">// 有不为0的初始值，放置在.data</span></span><br><span class="line"><span class="type">void</span> *Foo::sp = <span class="literal">nullptr</span>;  <span class="comment">// 放置在.bss</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> global;   <span class="comment">// 没有初始值，放置在.bss</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Foo foo;</span><br><span class="line">    foo.<span class="built_in">print</span>();</span><br><span class="line">    cout &lt;&lt; &amp;global &lt;&lt; endl;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>编译运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&gt; g++ two.cc -g -o two &amp;&amp; ./two</span><br><span class="line">static data: 0x563c95253010 0x563c95253158</span><br><span class="line">0 4 8 16 24 25</span><br><span class="line">32</span><br><span class="line">0x563c95253160</span><br></pre></td></tr></table></figure>
+
+<p>第一行打印的是静态数据的地址，第二行是对象内部按照声明次序，打印其offset，可见成员的实际排列次序和声明次序完全吻合，与其修饰符（public、protected、private）以及类型无关，也不会将同种修饰符的成员专门安放在一起。对象还需要添加padding部分以满足对齐，因此大小为32，</p>
+<p>反汇编查看.data段和.bss段：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">objdump -d -j .data two</span></span><br><span class="line"></span><br><span class="line">two:     file format elf64-x86-64</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">Disassembly of section .data:</span><br><span class="line"></span><br><span class="line">0000000000004000 &lt;__data_start&gt;:</span><br><span class="line">	...</span><br><span class="line"></span><br><span class="line">0000000000004008 &lt;__dso_handle&gt;:</span><br><span class="line">    4008:	08 40 00 00 00 00 00 00                             .@......</span><br><span class="line"></span><br><span class="line">0000000000004010 &lt;_ZN3Foo2sxE&gt;:    # Foo::sx</span><br><span class="line">    4010:	13 00 00 00                                         ....</span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">objdump -d -j .bss two</span></span><br><span class="line"></span><br><span class="line">two:     file format elf64-x86-64</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">Disassembly of section .bss:</span><br><span class="line"></span><br><span class="line">0000000000004040 &lt;_ZSt4cout@GLIBCXX_3.4&gt;:</span><br><span class="line">	...</span><br><span class="line"></span><br><span class="line">0000000000004150 &lt;completed.0&gt;:</span><br><span class="line">	...</span><br><span class="line"></span><br><span class="line">0000000000004158 &lt;_ZN3Foo2spE&gt;:   # Foo::sp</span><br><span class="line">	...</span><br><span class="line"></span><br><span class="line">0000000000004160 &lt;global&gt;:    # global</span><br><span class="line">    4160:	00 00 00 00                                         ....</span><br><span class="line"></span><br><span class="line">0000000000004164 &lt;_ZStL8__ioinit&gt;:</span><br><span class="line">    4164:	00 00 00 00               </span><br></pre></td></tr></table></figure>
+
+<p>符合我们的预期。</p>
+<h3 id="多态——单继承"><a href="#多态——单继承" class="headerlink" title="多态——单继承"></a>多态——单继承</h3><p>当类存在基类时，基类的数据会被作为类的一部分存在，我们也可以通过打印类成员指针的值，了解到类中数据成员是如何排列的。修改上述测试程序如下，首先我们考虑单继承：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="type">int</span> ba;</span><br><span class="line">    <span class="type">char</span> bb;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span> : <span class="keyword">public</span> Base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="type">char</span> da;</span><br><span class="line">    <span class="type">int</span> db;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Derived derived;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%d %d %d %d\n&quot;</span>,</span><br><span class="line">           &amp;Derived::ba, &amp;Derived::bb, &amp;Derived::da, &amp;Derived::db);</span><br><span class="line"></span><br><span class="line">    <span class="type">char</span> * p1 = <span class="built_in">reinterpret_cast</span>&lt;<span class="type">char</span> *&gt;(&amp;derived);</span><br><span class="line">    <span class="type">char</span> * p2 = <span class="built_in">reinterpret_cast</span>&lt;<span class="type">char</span> *&gt;(&amp;derived.ba);</span><br><span class="line">    <span class="type">char</span> * p3 = <span class="built_in">reinterpret_cast</span>&lt;<span class="type">char</span> *&gt;(&amp;derived.bb);</span><br><span class="line">    <span class="type">char</span> * p4 = <span class="built_in">reinterpret_cast</span>&lt;<span class="type">char</span> *&gt;(&amp;derived.da);</span><br><span class="line">    <span class="type">char</span> * p5 = <span class="built_in">reinterpret_cast</span>&lt;<span class="type">char</span> *&gt;(&amp;derived.db);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%lld %lld %lld %lld\n&quot;</span>,</span><br><span class="line">           p2 - p1, p3 - p1, p4 - p1, p5 - p1);</span><br><span class="line">    cout &lt;&lt; <span class="built_in">sizeof</span>(Base) &lt;&lt; endl;</span><br><span class="line">    cout &lt;&lt; <span class="built_in">sizeof</span>(Derived) &lt;&lt; endl;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>编译运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">0 4 8 12</span><br><span class="line">0 4 8 12</span><br><span class="line">8</span><br><span class="line">16</span><br></pre></td></tr></table></figure>
+
+<p>第一行打印成员指针获取的成员offset；</p>
+<p>第二行打印通过指针算术实际求出的对象中成员的offset，可见和第一行确实一致；</p>
+<p>三、四行打印基类和子类的大小。</p>
+<p>可以发现，基类的数据被存放在对象的起始处，子类自定义的数据成员相继摆放在后面。值得注意的是，编译器并未把子类和基类的数据成员“混为一谈”，编译器并未把子类的第一个char类型的成员和基类最后一个char类型成员相邻放置以节省padding的部分。基类的部分是作为一个整体存在于子类之中。</p>
+<h3 id="多态——多继承"><a href="#多态——多继承" class="headerlink" title="多态——多继承"></a>多态——多继承</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="type">int</span> b;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Base1</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="type">int</span> ba&#123;&#125;;</span><br><span class="line">    <span class="type">char</span> bb&#123;&#125;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Base2</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="type">int</span> bc&#123;&#125;;</span><br><span class="line">    <span class="type">char</span> bd&#123;&#125;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Base3</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="type">int</span> be;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span> : <span class="keyword">public</span> Base1, <span class="keyword">public</span> Base2, <span class="keyword">public</span> Base3</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="type">char</span> da&#123;&#125;;</span><br><span class="line">    <span class="type">int</span> db&#123;&#125;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Derived derived;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%d %d\n&quot;</span>,</span><br><span class="line">           &amp;Derived::ba, &amp;Derived::bb);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%d %d %d\n&quot;</span>, &amp;Derived::bc, &amp;Derived::bd, &amp;Derived::be);</span><br><span class="line"></span><br><span class="line"><span class="comment">//    printf(&quot;%d %d %d %d\n&quot;, &amp;Derived::bc, &amp;Derived::bd, &amp;Derived::b, &amp;Derived::be);</span></span><br><span class="line">    <span class="type">char</span> * p1 = <span class="built_in">reinterpret_cast</span>&lt;<span class="type">char</span> *&gt;(&amp;derived);</span><br><span class="line">    <span class="type">char</span> * p2 = <span class="built_in">reinterpret_cast</span>&lt;<span class="type">char</span> *&gt;(&amp;derived.bc);</span><br><span class="line">    <span class="type">char</span> * p3 = &amp;derived.bd;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%lld %lld\n&quot;</span>, p2 - p1, p3 - p1);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%lld %lld\n&quot;</span>, &amp;Derived::da, &amp;Derived::db);</span><br><span class="line">    cout &lt;&lt; <span class="built_in">sizeof</span>(Base1) &lt;&lt; endl;</span><br><span class="line">    cout &lt;&lt; <span class="built_in">sizeof</span>(Base2) &lt;&lt; endl;</span><br><span class="line">    cout &lt;&lt; <span class="built_in">sizeof</span>(Derived) &lt;&lt; endl;</span><br><span class="line">    <span class="type">int</span> Derived::* p = <span class="literal">nullptr</span>;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%d %p&quot;</span>, <span class="keyword">sizeof</span> p, p);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在多继承，尤其是多继</p>
+<h2 id="指向member-function的指针"><a href="#指向member-function的指针" class="headerlink" title="指向member function的指针"></a>指向member function的指针</h2><h3 id="static-function"><a href="#static-function" class="headerlink" title="static function"></a>static function</h3><h3 id="member-function"><a href="#member-function" class="headerlink" title="member function"></a>member function</h3><h3 id="virtual-function"><a href="#virtual-function" class="headerlink" title="virtual function"></a>virtual function</h3>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://neutron-l.github.io/2023/03/05/member_pointer/" data-id="clf8621rv0004a0u308yog6cz" data-title="Member Pointer" class="article-share-link">Share</a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Cpp-%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/" rel="tag">Cpp 对象模型</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-constructor" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/2023/03/05/constructor/" class="article-date">
@@ -1360,50 +1441,6 @@
 
 
   
-    <article id="post-iterator" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2022/11/19/iterator/" class="article-date">
-  <time class="dt-published" datetime="2022-11-19T03:01:43.079Z" itemprop="datePublished">2022-11-19</time>
-</a>
-    
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/language/">language</a>
-  </div>
-
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2022/11/19/iterator/">Iterator</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://neutron-l.github.io/2022/11/19/iterator/" data-id="claniqakk000is4u36ojd6zc6" data-title="Iterator" class="article-share-link">Share</a>
-      
-      
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Cpp/" rel="tag">Cpp</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
 
 
   <nav id="page-nav">
@@ -1430,6 +1467,10 @@
       <ul>
         
           <li>
+            <a href="/2024/02/27/rte_hash/">Ring</a>
+          </li>
+        
+          <li>
             <a href="/2024/02/26/DPDK%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E4%B8%8E%E4%BC%98%E5%8C%96/">Ring</a>
           </li>
         
@@ -1443,10 +1484,6 @@
         
           <li>
             <a href="/2023/04/06/mempool/">Mempool</a>
-          </li>
-        
-          <li>
-            <a href="/2023/03/27/type_traits/">type traits</a>
           </li>
         
       </ul>
